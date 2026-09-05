@@ -1,13 +1,14 @@
 {
   "name": "naskhah-studio-dev-tools",
   "private": true,
-  "version": "1.5.0",
-  "description": "Development-only tooling for the current static Naskhah Studio application. This package is intentionally kept under tools/ so Vercel production framework detection is not changed.",
+  "version": "2.0.0",
+  "description": "Development-only verification tooling for the current static Naskhah Studio application. This package is intentionally kept under tools/ so Vercel production framework detection is not changed.",
   "scripts": {
     "dev": "http-server .. -p 4173 -c-1",
     "serve": "http-server .. -p 4173 -c-1",
     "check": "node scripts/check-runtime.mjs",
-    "stack:check": "node scripts/check-runtime.mjs"
+    "stack:check": "node scripts/check-runtime.mjs",
+    "preview:check": "node scripts/check-preview.mjs"
   },
   "devDependencies": {
     "http-server": "14.1.1"

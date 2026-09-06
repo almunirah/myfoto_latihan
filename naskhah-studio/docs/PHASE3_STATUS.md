@@ -3,16 +3,11 @@
 - Branch: `naskhah-phase3-app-modularization`
 - Production `main`: unchanged by Phase 3 work until PR merge
 - Phase 2 modular runtime: preserved
-- Phase 3 execution plan: added
-- `app.js` responsibility map: added
-- Phase 3 baseline guard: added
-- Dedicated GitHub Actions baseline workflow: added
-- Batch A1 core bridge: completed
-- Batch A2 preparation contract: completed
-- Batch A2 runtime cutover bridge: completed
-- Batch B1 dashboard/project-list runtime extraction: completed
-- Batch B2 project lifecycle runtime extraction: completed
-- Batch C writer/editor runtime extraction: completed
+- Phase 3 execution plan / module map / CI guards: active
+- Batch A1/A2 core bridge + shared state/service cutover: completed
+- Batch B1 dashboard/project-list extraction: completed
+- Batch B2 project lifecycle extraction: completed
+- Batch C writer/editor extraction: completed
 - Batch D1 secondary workspace views extraction: completed
 - Batch D2 overview/deadlines/submission tracking extraction: completed
 - Batch D3 workspace tab bindings extraction: completed
@@ -24,74 +19,53 @@
 - Cleanup E5 profile/app-shell duplicate removal from `app.js`: completed
 - Batch F1 project-shell orchestration extraction: completed
 - Cleanup F2 project-shell duplicate removal from `app.js`: completed
+- Batch G1 project persistence extraction: completed
+- Cleanup G2 legacy `saveProject` removal from `app.js`: completed
 
 ## Current runtime ownership
 
-`js/core/runtime.js` owns the shared core contract and `js/core/cutover.js` activates that contract after `app.js` declarations but before downstream feature modules load.
+`js/core/runtime.js` owns the shared core contract and `js/core/cutover.js` activates shared state/session/data services.
 
-Live core responsibilities delegated through `NaskhahCore`:
+`js/modules/project-persistence.js` now owns the shared `saveProject` persistence path. It preserves the existing `nv1_projects` update payload, updated timestamp handling and in-memory `state.projects` synchronization. Cleanup G2 physically removed the old `async function saveProject(...)` implementation from `app.js`; only `let saveProject;` remains for the classic-script compatibility contract.
 
-- shared application state initialization
-- `authCall`
-- `setSession`
-- `loadProfile`
-- `loadProjects`
+`js/modules/project-shell.js` owns `projectWords`, `projectPct`, project tab definitions/rendering, `tabs`, and `renderProject`.
 
-Cleanup E1 physically removed the legacy core service implementations from `app.js`; only mutable compatibility bindings remain.
+`js/modules/dashboard.js` owns Dashboard and My Projects listing. `js/modules/projects.js` owns create/normalize/open lifecycle. `js/modules/writer.js` owns the editor. `js/modules/overview-tracking.js`, `js/modules/workspace-views.js`, and `js/modules/workspace-bindings.js` own the project workspace. `js/modules/profile-shell.js` owns Profile & Subscription plus global app-shell/logout. Logout preserves the shared state object reference with `Object.assign(state, NaskhahCore.createState())`.
 
-Cleanup E2 physically removed legacy writer/editor implementations from `app.js`; `js/modules/writer.js` owns those live implementations.
-
-Cleanup E3 physically removed extracted Overview/deadline/submission and workspace-view implementations from `app.js`; the live implementations remain in `js/modules/overview-tracking.js` and `js/modules/workspace-views.js`.
-
-Cleanup E4 physically removed the already-replaced Dashboard / My Projects and project lifecycle implementations from `app.js`: `projectCard`, `renderDashboard`, `reminderCentre`, `renderProjects`, `openCreate`, `createProject`, `normalizeProject`, and `openProject`.
-
-Cleanup E5 physically removed the already-replaced Profile / app-shell implementations from `app.js`: `renderProfile` and `bindGlobal`.
-
-Batch F1 introduced `js/modules/project-shell.js`, loaded immediately after core cutover and before Dashboard/Projects. It owns:
-
-- `projectWords`
-- `projectPct`
-- project tab definitions/rendering
-- `tabs`
-- `renderProject`
-
-Cleanup F2 then physically removed those legacy project-shell implementations and the old `tabDefs` constant from `app.js`. Only mutable compatibility bindings remain there, while the module owns live behavior.
-
-The live Profile & Subscription rendering, profile update/password flow, global shell navigation and logout remain owned by `js/modules/profile-shell.js`. Logout continues to reset the existing shared state object with `Object.assign(state, NaskhahCore.createState())` so core service references remain valid.
-
-The existing Supabase client remains single-instance. No backend route, schema, auth rule, table name, project model, manuscript data structure or storage bucket name is changed.
+The existing Supabase client remains single-instance. No backend route, schema, auth rule, table name, project model, manuscript data structure or storage bucket name changed.
 
 ## Current runtime order
 
 1. `js/core/runtime.js`
 2. `app.js`
 3. `js/core/cutover.js`
-4. `js/modules/project-shell.js`
-5. `js/modules/dashboard.js`
-6. `js/modules/projects.js`
-7. `js/modules/writer.js`
-8. `js/modules/overview-tracking.js`
-9. `js/modules/workspace-views.js`
-10. `js/modules/workspace-bindings.js`
-11. `js/modules/profile-shell.js`
-12. `js/modules/versions.js`
-13. `js/admin/inactive-users.js`
-14. `js/auth/login.js`
+4. `js/modules/project-persistence.js`
+5. `js/modules/project-shell.js`
+6. `js/modules/dashboard.js`
+7. `js/modules/projects.js`
+8. `js/modules/writer.js`
+9. `js/modules/overview-tracking.js`
+10. `js/modules/workspace-views.js`
+11. `js/modules/workspace-bindings.js`
+12. `js/modules/profile-shell.js`
+13. `js/modules/versions.js`
+14. `js/admin/inactive-users.js`
+15. `js/auth/login.js`
 
 ## Latest verification gate
 
-Cleanup F2 is green on guard commit `0388d3085ed5c4ca1420420d54ff44519784784a`:
+Cleanup G2 is green on human-authored guard commit `9c3181e9190700b2796b5abbd093cae0ff4e4b27`:
 
 1. Phase 2 strict runtime guard: PASS
-2. Phase 3 Cleanup F2 ownership/removal guard: PASS
+2. Phase 3 Cleanup G2 ownership/removal guard: PASS
 3. Vercel Preview deployment: SUCCESS
-4. PR #4 remains mergeable
-5. `main` remains untouched
+4. `saveProject` legacy implementation is physically absent from `app.js`
+5. `nv1_projects` persistence is guarded in `project-persistence.js`
 
-The strict runtime checker validates every active Phase 3 script in exact load order. The Preview static smoke checker covers the active runtime modules.
+The initial G2 one-shot attempt correctly stopped before commit when the strict guard still expected `nv1_projects` inside `app.js`. The guard was then updated to validate the new module ownership, the cleanup was rerun, and both Phase 2 and Phase 3 checks passed.
 
-Authenticated browser smoke remains a required gate before final merge because the branch Preview has previously redirected to the production custom domain in some sessions.
+Authenticated browser smoke remains required before final merge because the branch Preview has previously redirected to the production custom domain in some sessions.
 
 ## Next step
 
-Preserve `saveProject`, admin runtime and bootstrap/auth wiring until their own ownership gates are proven. The next safe extraction candidate is the shared project persistence path (`saveProject`) because all modular feature owners depend on it; it should be moved behind a separately guarded service contract before any physical removal.
+Preserve admin runtime and bootstrap/auth wiring until separately extracted and gated. The next conservative target is admin runtime ownership; `bindTab`/versions cleanup should remain separate because its wrapper chain has additional runtime coupling.

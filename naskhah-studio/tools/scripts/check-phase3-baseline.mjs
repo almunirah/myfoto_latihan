@@ -10,6 +10,7 @@ const files = {
   index: 'index.html',
   core: 'js/core/runtime.js',
   cutover: 'js/core/cutover.js',
+  projectPersistence: 'js/modules/project-persistence.js',
   projectShell: 'js/modules/project-shell.js',
   dashboard: 'js/modules/dashboard.js',
   projects: 'js/modules/projects.js',
@@ -131,6 +132,7 @@ const requiredCutoverTokens = [
 for (const token of requiredCutoverTokens) if (!source.cutover.includes(token)) fail(`required A2 cutover token missing: ${token}`);
 
 const moduleChecks = {
+  projectPersistence: ['saveProject = async () =>',"from('nv1_projects')","window, 'NaskhahProjectPersistenceModule'"],
   projectShell: ['projectWords = (p) =>','projectPct = (p) =>','tabs = (active) =>','renderProject = (tab) =>',"window, 'NaskhahProjectShellModule'"],
   dashboard: ['projectCard = (p) =>','reminderCentre = () =>','renderDashboard = () =>','renderProjects = () =>',"window, 'NaskhahDashboardModule'"],
   projects: ['openCreate = () =>','createProject = async () =>','normalizeProject = (p) =>','openProject = (id) =>',"window, 'NaskhahProjectsModule'"],
@@ -148,6 +150,7 @@ const expectedScripts = [
   './js/core/runtime.js',
   './app.js',
   './js/core/cutover.js',
+  './js/modules/project-persistence.js',
   './js/modules/project-shell.js',
   './js/modules/dashboard.js',
   './js/modules/projects.js',
@@ -177,4 +180,4 @@ console.log('Project shell is module-owned and legacy project-shell implementati
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: preserve saveProject, admin runtime and bootstrap/auth until separately owned and gated.');
+console.log('G1 project persistence ownership is active; next step is separately gated physical removal of legacy saveProject.');

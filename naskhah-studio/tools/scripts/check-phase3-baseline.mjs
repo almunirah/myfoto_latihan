@@ -22,7 +22,8 @@ const files = {
   adminRuntime: 'js/admin/runtime.js',
   versions: 'js/modules/versions.js',
   admin: 'js/admin/inactive-users.js',
-  auth: 'js/auth/login.js'
+  auth: 'js/auth/login.js',
+  bootstrap: 'js/core/bootstrap.js'
 };
 
 function fail(message) {
@@ -45,7 +46,7 @@ const source = {};
 for (const [key, file] of Object.entries(files)) source[key] = read(file);
 for (const file of Object.values(files).filter(x => x.endsWith('.js'))) syntaxOk(file);
 
-const requiredAppTokens = ['createClient','function bindAuth','async function boot'];
+const requiredAppTokens = ['createClient','function enterApp'];
 for (const token of requiredAppTokens) if (!source.app.includes(token)) fail(`required app.js token missing: ${token}`);
 
 const removedLegacyCore = [
@@ -124,6 +125,10 @@ const removedLegacyAdmin = [
 for (const token of removedLegacyAdmin) if (source.app.includes(token)) fail(`Cleanup H2 regression: legacy admin implementation returned: ${token}`);
 if (!source.app.includes('let renderAdmin,adminCreateDialog,adminEditDialog,adminDeleteDialog;')) fail('Cleanup H2 delegated admin bindings are missing.');
 
+const removedLegacyBootstrap = ['function bindAuth(', 'async function boot(', "document.addEventListener('DOMContentLoaded',boot);"];
+for (const token of removedLegacyBootstrap) if (source.app.includes(token)) fail(`Cleanup I2 regression: legacy bootstrap implementation returned: ${token}`);
+if (!source.app.includes('let bindAuth,boot;')) fail('Cleanup I2 delegated bootstrap bindings are missing.');
+
 const requiredCoreTokens = [
   "window, 'NaskhahCore'",
   "supabaseUrl: 'https://nrnrmbjrczmzkgimxdun.supabase.co'",
@@ -155,7 +160,8 @@ const moduleChecks = {
   workspace: ['outlineView = (p) =>','checklistView = (p) =>','notesView = (p) =>','referencesView = (p) =>','exportView = (p) =>',"window, 'NaskhahWorkspaceViewsModule'"],
   workspaceBindings: ['const bindOutline = (p) =>','const bindChecklist = (p) =>','const bindNotes = (p) =>','const bindReferences = (p) =>','const bindExport = (p) =>','bindTab = (tab) =>',"window, 'NaskhahWorkspaceBindingsModule'"],
   profileShell: ['renderProfile = async () =>','bindGlobal = () =>','Object.assign(state, window.NaskhahCore.createState())',"window, 'NaskhahProfileShellModule'"],
-  adminRuntime: ['renderAdmin = async () =>','adminCreateDialog = () =>','adminEditDialog = (u) =>','adminDeleteDialog = (u) =>',"from('nv1_profiles')","from('nv1_project_metadata')","action: 'admin_create_user'","action: 'admin_delete_user'","window, 'NaskhahAdminRuntimeModule'"]
+  adminRuntime: ['renderAdmin = async () =>','adminCreateDialog = () =>','adminEditDialog = (u) =>','adminDeleteDialog = (u) =>',"from('nv1_profiles')","from('nv1_project_metadata')","action: 'admin_create_user'","action: 'admin_delete_user'","window, 'NaskhahAdminRuntimeModule'"],
+  bootstrap: ['bindAuth = () =>','boot = async () =>',"document.addEventListener('DOMContentLoaded', boot)","window, 'NaskhahBootstrapModule'"]
 };
 for (const [name, tokens] of Object.entries(moduleChecks)) {
   for (const token of tokens) if (!source[name].includes(token)) fail(`required ${name} token missing: ${token}`);
@@ -177,7 +183,8 @@ const expectedScripts = [
   './js/admin/runtime.js',
   './js/modules/versions.js',
   './js/admin/inactive-users.js',
-  './js/auth/login.js'
+  './js/auth/login.js',
+  './js/core/bootstrap.js'
 ];
 let last = -1;
 for (const src of expectedScripts) {
@@ -191,9 +198,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Cleanup H2 admin runtime contract is intact.');
-console.log('Admin panel rendering and user-management dialogs are module-owned; duplicated legacy admin implementations are physically absent from app.js.');
+console.log('Phase 3 Cleanup I2 bootstrap/auth orchestration contract is intact.');
+console.log('Admin runtime and bootstrap/auth orchestration are module-owned; duplicated legacy implementations are physically absent from app.js.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: keep bootstrap/auth and bindTab/version wrapper wiring separate until their own ownership gates are proven.');
+console.log('Next step: keep bindTab/version wrapper cleanup separately gated, then run final authenticated browser smoke before merge.');

@@ -22,7 +22,8 @@ const runtimeFiles = [
   'js/admin/runtime.js',
   'js/modules/versions.js',
   'js/admin/inactive-users.js',
-  'js/auth/login.js'
+  'js/auth/login.js',
+  'js/core/bootstrap.js'
 ];
 
 const required = ['index.html', 'styles.css', 'assets/logo.svg', ...runtimeFiles];
@@ -45,6 +46,7 @@ const adminRuntime = read('js/admin/runtime.js');
 const login = read('js/auth/login.js');
 const versions = read('js/modules/versions.js');
 const inactiveUsers = read('js/admin/inactive-users.js');
+const bootstrap = read('js/core/bootstrap.js');
 
 function syntaxOk(file) {
   const result = spawnSync(process.execPath, ['--check', resolve(appRoot, file)], { encoding: 'utf8' });
@@ -101,6 +103,9 @@ const checks = [
   ['Login calls setSession', login.includes('await setSession(')],
   ['User suspension guard preserved', login.includes("state.profile.status==='suspended'")],
   ['Admin role guard preserved', login.includes("state.profile?.role!=='admin'")],
+  ['Bootstrap compatibility bindings exist', /let\s+[^;]*\bbindAuth\b[^;]*\bboot\b[^;]*;/.test(app)],
+  ['Bootstrap owns auth form wiring', bootstrap.includes('bindAuth = () =>')],
+  ['Bootstrap owns startup orchestration', bootstrap.includes('boot = async () =>') && bootstrap.includes("document.addEventListener('DOMContentLoaded', boot)")],
   ['Versions module loaded', index.includes('./js/modules/versions.js') && versions.includes('window.versionsView')],
   ['Versions bind hook preserved', versions.includes('window.bindTab=function') && versions.includes("tab==='versions'")],
   ['Versions persistence preserved', versions.includes('await saveProject()')],
@@ -121,4 +126,4 @@ for (const [name, ok] of checks) {
 }
 
 if (failed) process.exit(1);
-console.log('\nRuntime stack matches the strict Phase 3 H1 modular contract while preserving Phase 2 behavior.');
+console.log('\nRuntime stack matches the strict Phase 3 I2 modular contract while preserving Phase 2 behavior.');

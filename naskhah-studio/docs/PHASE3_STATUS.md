@@ -25,22 +25,22 @@
 - Cleanup H2 legacy admin runtime removal from `app.js`: completed
 - Batch I1 bootstrap/auth orchestration extraction: completed
 - Cleanup I2 legacy `bindAuth` / `boot` / duplicate `DOMContentLoaded` startup removal: completed
+- Batch J0 `bindTab` / Versions wrapper audit: completed
+- Batch J1 base tab-router ownership: active and guarded
 
 ## Current runtime ownership
 
 `js/core/runtime.js` owns the shared core contract and `js/core/cutover.js` activates shared state/session/data services.
 
-`js/modules/project-persistence.js` owns the shared `saveProject` persistence path. It preserves the existing `nv1_projects` update payload, updated timestamp handling and in-memory `state.projects` synchronization. Cleanup G2 physically removed the old `async function saveProject(...)` implementation from `app.js`; only `let saveProject;` remains for the classic-script compatibility contract.
+`js/modules/project-persistence.js` owns the shared `saveProject` persistence path. `js/modules/project-shell.js` owns project shell rendering and project progress helpers. `js/modules/dashboard.js` and `js/modules/projects.js` own Dashboard / My Projects and project lifecycle. `js/modules/writer.js` owns the editor.
 
-`js/modules/project-shell.js` owns `projectWords`, `projectPct`, project tab definitions/rendering, `tabs`, and `renderProject`.
+`js/modules/tab-router.js` is now the base tab router for the remaining delegated route. It handles `writing` by calling `bindWriter(state.current)`. `js/modules/overview-tracking.js` then wraps that router for Overview, and `js/modules/workspace-bindings.js` wraps the result for Outline, Checklist, Notes, References and Export.
 
-`js/modules/dashboard.js` owns Dashboard and My Projects listing. `js/modules/projects.js` owns create/normalize/open lifecycle. `js/modules/writer.js` owns the editor. `js/modules/overview-tracking.js`, `js/modules/workspace-views.js`, and `js/modules/workspace-bindings.js` own the project workspace. `js/modules/profile-shell.js` owns Profile & Subscription plus global app-shell/logout. Logout preserves the shared state object reference with `Object.assign(state, NaskhahCore.createState())`.
+`js/modules/versions.js` remains the final Versions wrapper and is intentionally unchanged in J1. Its cleanup will remain a separate gate because it currently captures `window.bindTab || bindTab` and republishes `window.bindTab`.
 
-`js/admin/runtime.js` owns the main admin runtime: `renderAdmin`, Add User / `admin_create_user`, Edit User profile/subscription flow, Delete User / `admin_delete_user`, `nv1_profiles` user-management query and `nv1_project_metadata` metadata-only project listing. `js/admin/inactive-users.js` remains the inactive-user extension and wraps the lexical `renderAdmin` binding.
+`js/modules/profile-shell.js` owns Profile & Subscription plus global app-shell/logout. Logout preserves the shared state reference with `Object.assign(state, NaskhahCore.createState())`.
 
-`js/core/bootstrap.js` now owns the remaining startup/auth orchestration: `bindAuth`, `boot`, forgot/reset form wiring, session restoration, active-profile startup check and the sole app bootstrap `DOMContentLoaded` registration. `app.js` retains only `let bindAuth,boot;` for classic-script compatibility. The legacy `bindAuth`, `boot` and old `document.addEventListener('DOMContentLoaded',boot)` registration are physically absent from `app.js`.
-
-`js/auth/login.js` remains loaded immediately before `js/core/bootstrap.js`. Its capture-phase login/admin listeners are therefore registered before bootstrap startup while preserving the Phase 2 login guards and `/functions/v1/naskhah-login` route.
+`js/admin/runtime.js` owns the main admin runtime and `js/admin/inactive-users.js` remains the inactive-user extension. `js/core/bootstrap.js` owns `bindAuth`, `boot`, forgot/reset wiring, session restoration and the app bootstrap `DOMContentLoaded` registration. `js/auth/login.js` remains immediately before bootstrap so its capture-phase login/admin listeners register first.
 
 The existing Supabase client remains single-instance. No backend route, schema, auth rule, table name, project model, manuscript data structure or storage bucket name changed.
 
@@ -54,32 +54,34 @@ The existing Supabase client remains single-instance. No backend route, schema, 
 6. `js/modules/dashboard.js`
 7. `js/modules/projects.js`
 8. `js/modules/writer.js`
-9. `js/modules/overview-tracking.js`
-10. `js/modules/workspace-views.js`
-11. `js/modules/workspace-bindings.js`
-12. `js/modules/profile-shell.js`
-13. `js/admin/runtime.js`
-14. `js/modules/versions.js`
-15. `js/admin/inactive-users.js`
-16. `js/auth/login.js`
-17. `js/core/bootstrap.js`
+9. `js/modules/tab-router.js`
+10. `js/modules/overview-tracking.js`
+11. `js/modules/workspace-views.js`
+12. `js/modules/workspace-bindings.js`
+13. `js/modules/profile-shell.js`
+14. `js/admin/runtime.js`
+15. `js/modules/versions.js`
+16. `js/admin/inactive-users.js`
+17. `js/auth/login.js`
+18. `js/core/bootstrap.js`
 
 ## Latest verification gate
 
-Cleanup I2 has completed physically on the branch. The one-shot cleanup commit is followed by this human-authored status commit so normal PR checks can run on the final I2 tree.
+The previous Vercel build-rate limit has cleared. A documentation-only J0 recheck produced a normal Vercel Preview SUCCESS, so runtime work resumed conservatively.
 
-Required final I2 gate:
+J1 introduced `js/modules/tab-router.js` and activated strict Phase 2 / Phase 3 ownership guards. Vercel also produced a successful Preview for the J1 guard tree.
+
+Required J1 final gate on this human-authored status commit:
 
 1. Phase 2 strict runtime guard: PASS
-2. Phase 3 Cleanup I2 ownership/removal guard: PASS
+2. Phase 3 J1 tab-router ownership guard: PASS
 3. Vercel Preview deployment: SUCCESS
-4. Legacy `bindAuth`, `boot` and duplicate app bootstrap registration physically absent from `app.js`
-5. `js/core/bootstrap.js` is the guarded bootstrap owner and loads after `js/auth/login.js`
-6. PR #4 remains open and mergeable
-7. `main` remains untouched
+4. PR #4 remains open and mergeable
+5. `main` remains untouched
+6. legacy `bindTab` body remains in `app.js` until separately gated J2 cleanup
 
 Authenticated browser smoke remains required before final merge because the branch Preview has previously redirected to the production custom domain in some sessions.
 
 ## Next step
 
-After the I2 gates are green, keep the legacy `bindTab` / Versions wrapper-chain cleanup as a separately gated batch. Then perform the final authenticated browser smoke before considering PR #4 for merge.
+If this J1 final gate stays green, proceed to J2: physically remove only the legacy `function bindTab(...)` body from `app.js`, retain a mutable `let bindTab;` compatibility binding, strengthen the regression guard, and verify Phase 2 + Phase 3 + Vercel again. Versions wrapper cleanup remains separate after J2.

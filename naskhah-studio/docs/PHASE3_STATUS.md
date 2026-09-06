@@ -22,6 +22,8 @@
 - Cleanup E3 extracted view duplicate removal from `app.js`: completed
 - Cleanup E4 dashboard/project lifecycle duplicate removal from `app.js`: completed
 - Cleanup E5 profile/app-shell duplicate removal from `app.js`: completed
+- Batch F1 project-shell orchestration extraction: completed
+- Cleanup F2 project-shell duplicate removal from `app.js`: completed
 
 ## Current runtime ownership
 
@@ -45,18 +47,51 @@ Cleanup E4 physically removed the already-replaced Dashboard / My Projects and p
 
 Cleanup E5 physically removed the already-replaced Profile / app-shell implementations from `app.js`: `renderProfile` and `bindGlobal`.
 
-The live Profile & Subscription rendering, profile update/password flow, global shell navigation and logout remain owned by `js/modules/profile-shell.js`. `app.js` retains only mutable compatibility bindings. Logout continues to reset the existing shared state object with `Object.assign(state, NaskhahCore.createState())` so core service references remain valid.
+Batch F1 introduced `js/modules/project-shell.js`, loaded immediately after core cutover and before Dashboard/Projects. It owns:
+
+- `projectWords`
+- `projectPct`
+- project tab definitions/rendering
+- `tabs`
+- `renderProject`
+
+Cleanup F2 then physically removed those legacy project-shell implementations and the old `tabDefs` constant from `app.js`. Only mutable compatibility bindings remain there, while the module owns live behavior.
+
+The live Profile & Subscription rendering, profile update/password flow, global shell navigation and logout remain owned by `js/modules/profile-shell.js`. Logout continues to reset the existing shared state object with `Object.assign(state, NaskhahCore.createState())` so core service references remain valid.
 
 The existing Supabase client remains single-instance. No backend route, schema, auth rule, table name, project model, manuscript data structure or storage bucket name is changed.
 
+## Current runtime order
+
+1. `js/core/runtime.js`
+2. `app.js`
+3. `js/core/cutover.js`
+4. `js/modules/project-shell.js`
+5. `js/modules/dashboard.js`
+6. `js/modules/projects.js`
+7. `js/modules/writer.js`
+8. `js/modules/overview-tracking.js`
+9. `js/modules/workspace-views.js`
+10. `js/modules/workspace-bindings.js`
+11. `js/modules/profile-shell.js`
+12. `js/modules/versions.js`
+13. `js/admin/inactive-users.js`
+14. `js/auth/login.js`
+
 ## Latest verification gate
 
-Cleanup E5 runtime guard is green. Guard commit `6bf26040545ab7a91f8b32afd25525266a601337` passed Phase 2, Phase 3 and Vercel. Documentation-only commits after that do not alter runtime behavior.
+Cleanup F2 is green on guard commit `0388d3085ed5c4ca1420420d54ff44519784784a`:
 
-The strict runtime checker validates every active Phase 3 script in exact load order. The Preview static smoke checker covers every active Phase 3 runtime module.
+1. Phase 2 strict runtime guard: PASS
+2. Phase 3 Cleanup F2 ownership/removal guard: PASS
+3. Vercel Preview deployment: SUCCESS
+4. PR #4 remains mergeable
+5. `main` remains untouched
+
+The strict runtime checker validates every active Phase 3 script in exact load order. The Preview static smoke checker covers the active runtime modules.
 
 Authenticated browser smoke remains a required gate before final merge because the branch Preview has previously redirected to the production custom domain in some sessions.
 
 ## Next step
 
-Preserve `saveProject`, `renderProject`, admin runtime and bootstrap/auth wiring until their own ownership gates are proven. The next safe move is to extract one of those responsibilities into its own module before any further physical removal, rather than deleting critical bootstrap logic directly.
+Preserve `saveProject`, admin runtime and bootstrap/auth wiring until their own ownership gates are proven. The next safe extraction candidate is the shared project persistence path (`saveProject`) because all modular feature owners depend on it; it should be moved behind a separately guarded service contract before any physical removal.

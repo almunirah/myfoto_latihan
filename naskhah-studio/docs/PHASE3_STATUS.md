@@ -63,7 +63,7 @@ The existing Supabase client remains single-instance. No backend route, schema, 
 
 ## Latest verification gate
 
-Cleanup E5 is green on human-authored guard commit `6bf26040545ab7a91f8b32afd25525266a601337`:
+Cleanup E5 is green on guard commit `6bf26040545ab7a91f8b32afd25525266a601337`, and the subsequent documentation-only commit preserves the same runtime code:
 
 1. Phase 2 strict runtime guard: PASS
 2. Phase 3 Cleanup E5 ownership/removal guard: PASS

@@ -19,6 +19,7 @@ const files = {
   workspace: 'js/modules/workspace-views.js',
   workspaceBindings: 'js/modules/workspace-bindings.js',
   profileShell: 'js/modules/profile-shell.js',
+  adminRuntime: 'js/admin/runtime.js',
   versions: 'js/modules/versions.js',
   admin: 'js/admin/inactive-users.js',
   auth: 'js/auth/login.js'
@@ -144,7 +145,8 @@ const moduleChecks = {
   overview: ['overviewView = (p) =>','deadlinesView = (p) =>','specialSubmissionView = (p) =>','const bindOverview = (p) =>','bindTab = (tab) =>',"window, 'NaskhahOverviewTrackingModule'"],
   workspace: ['outlineView = (p) =>','checklistView = (p) =>','notesView = (p) =>','referencesView = (p) =>','exportView = (p) =>',"window, 'NaskhahWorkspaceViewsModule'"],
   workspaceBindings: ['const bindOutline = (p) =>','const bindChecklist = (p) =>','const bindNotes = (p) =>','const bindReferences = (p) =>','const bindExport = (p) =>','bindTab = (tab) =>',"window, 'NaskhahWorkspaceBindingsModule'"],
-  profileShell: ['renderProfile = async () =>','bindGlobal = () =>','Object.assign(state, window.NaskhahCore.createState())',"window, 'NaskhahProfileShellModule'"]
+  profileShell: ['renderProfile = async () =>','bindGlobal = () =>','Object.assign(state, window.NaskhahCore.createState())',"window, 'NaskhahProfileShellModule'"],
+  adminRuntime: ['renderAdmin = async () =>','adminCreateDialog = () =>','adminEditDialog = (u) =>','adminDeleteDialog = (u) =>',"from('nv1_profiles')","from('nv1_project_metadata')","action: 'admin_create_user'","action: 'admin_delete_user'","window, 'NaskhahAdminRuntimeModule'"]
 };
 for (const [name, tokens] of Object.entries(moduleChecks)) {
   for (const token of tokens) if (!source[name].includes(token)) fail(`required ${name} token missing: ${token}`);
@@ -163,6 +165,7 @@ const expectedScripts = [
   './js/modules/workspace-views.js',
   './js/modules/workspace-bindings.js',
   './js/modules/profile-shell.js',
+  './js/admin/runtime.js',
   './js/modules/versions.js',
   './js/admin/inactive-users.js',
   './js/auth/login.js'
@@ -179,9 +182,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Cleanup G2 project-persistence contract is intact.');
-console.log('Project persistence and project shell are module-owned; legacy saveProject/project-shell implementations are physically absent from app.js.');
+console.log('Phase 3 Batch H1 admin runtime ownership contract is intact.');
+console.log('Admin panel rendering and user-management dialogs are module-owned while legacy app.js implementations remain as rollback fallback.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: preserve admin runtime and bootstrap/auth until separately owned and gated.');
+console.log('Next step: verify Preview/CI, then separately gate physical admin cleanup before touching bootstrap/auth wiring.');

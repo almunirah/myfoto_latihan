@@ -130,6 +130,10 @@ const removedLegacyBootstrap = ['function bindAuth(', 'async function boot(', "d
 for (const token of removedLegacyBootstrap) if (source.app.includes(token)) fail(`Cleanup I2 regression: legacy bootstrap implementation returned: ${token}`);
 if (!source.app.includes('let bindAuth,boot;')) fail('Cleanup I2 delegated bootstrap bindings are missing.');
 
+const removedLegacyBindTab = ['function bindTab('];
+for (const token of removedLegacyBindTab) if (source.app.includes(token)) fail(`Cleanup J2 regression: legacy bindTab implementation returned: ${token}`);
+if (!source.app.includes('let bindTab;')) fail('Cleanup J2 delegated bindTab binding is missing.');
+
 const requiredCoreTokens = [
   "window, 'NaskhahCore'",
   "supabaseUrl: 'https://nrnrmbjrczmzkgimxdun.supabase.co'",
@@ -202,9 +206,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 J1.5 tab-router and Versions lexical wrapper contract is intact.');
-console.log('Base writing-tab routing is module-owned and Versions now wraps the lexical bindTab chain explicitly; the legacy app.js bindTab body remains only for separately gated J2 cleanup.');
+console.log('Phase 3 Cleanup J2 bindTab contract is intact.');
+console.log('Base writing-tab routing and Versions lexical wrapper are module-owned; the legacy app.js bindTab body is physically absent.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: verify J1 in Preview, then perform separately gated J2 legacy bindTab removal before Versions wrapper cleanup.');
+console.log('Next step: run J2 Preview regression, then perform final authenticated browser smoke before merge.');

@@ -94,6 +94,8 @@ const checks = [
   ['Project shell owns project word/progress helpers', projectShell.includes('projectWords = (p) =>') && projectShell.includes('projectPct = (p) =>')],
   ['Tab router owns base writing route', tabRouter.includes('bindTab = (tab) =>') && tabRouter.includes("tab === 'writing'") && tabRouter.includes('bindWriter(state.current)')],
   ['Tab router contract marker', tabRouter.includes("window, 'NaskhahTabRouterModule'")],
+  ['Base bindTab compatibility binding exists', /let\s+bindTab\s*;/.test(app)],
+  ['Legacy bindTab implementation absent', !/function\s+bindTab\s*\(/.test(app)],
   ['Admin runtime owns renderAdmin', adminRuntime.includes('renderAdmin = async () =>')],
   ['Admin runtime preserves profile and metadata sources', adminRuntime.includes("from('nv1_profiles')") && adminRuntime.includes("from('nv1_project_metadata')")],
   ['Admin create action preserved', adminRuntime.includes("action: 'admin_create_user'")],
@@ -130,4 +132,4 @@ for (const [name, ok] of checks) {
 }
 
 if (failed) process.exit(1);
-console.log('\nRuntime stack matches the strict Phase 3 J1.5 modular contract while preserving Phase 2 behavior.');
+console.log('\nRuntime stack matches the strict Phase 3 J2 modular contract while preserving Phase 2 behavior.');

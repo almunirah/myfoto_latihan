@@ -44,7 +44,7 @@ const source = {};
 for (const [key, file] of Object.entries(files)) source[key] = read(file);
 for (const file of Object.values(files).filter(x => x.endsWith('.js'))) syntaxOk(file);
 
-const requiredAppTokens = ['createClient','nv1_profiles','nv1_projects','function saveProject','function renderAdmin'];
+const requiredAppTokens = ['createClient','nv1_profiles','function renderAdmin'];
 for (const token of requiredAppTokens) if (!source.app.includes(token)) fail(`required app.js token missing: ${token}`);
 
 const removedLegacyCore = [
@@ -109,6 +109,10 @@ const removedLegacyProjectShell = [
 ];
 for (const token of removedLegacyProjectShell) if (source.app.includes(token)) fail(`Cleanup F2 regression: legacy project-shell implementation returned: ${token}`);
 if (!source.app.includes('let projectWords,projectPct,tabs,renderProject;')) fail('Cleanup F2 delegated project-shell bindings are missing.');
+
+const removedLegacyProjectPersistence = ['async function saveProject('];
+for (const token of removedLegacyProjectPersistence) if (source.app.includes(token)) fail(`Cleanup G2 regression: legacy saveProject implementation returned: ${token}`);
+if (!source.app.includes('let saveProject;')) fail('Cleanup G2 delegated saveProject binding is missing.');
 
 const requiredCoreTokens = [
   "window, 'NaskhahCore'",
@@ -175,9 +179,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Cleanup F2 contract is intact.');
-console.log('Project shell is module-owned and legacy project-shell implementations are physically absent from app.js.');
+console.log('Phase 3 Cleanup G2 contract is intact.');
+console.log('Project persistence and project shell are module-owned; legacy saveProject/project-shell implementations are physically absent from app.js.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('G1 project persistence ownership is active; next step is separately gated physical removal of legacy saveProject.');
+console.log('Next step: preserve admin runtime and bootstrap/auth until separately owned and gated.');

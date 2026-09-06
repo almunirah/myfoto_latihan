@@ -10,6 +10,7 @@ const runtimeFiles = [
   'js/core/runtime.js',
   'app.js',
   'js/core/cutover.js',
+  'js/modules/project-shell.js',
   'js/modules/dashboard.js',
   'js/modules/projects.js',
   'js/modules/writer.js',
@@ -35,6 +36,7 @@ const index = read('index.html');
 const app = read('app.js');
 const core = read('js/core/runtime.js');
 const cutover = read('js/core/cutover.js');
+const projectShell = read('js/modules/project-shell.js');
 const profileShell = read('js/modules/profile-shell.js');
 const login = read('js/auth/login.js');
 const versions = read('js/modules/versions.js');
@@ -78,7 +80,9 @@ const checks = [
   ['Core setSession compatibility binding exists', /async\s+function\s+setSession\s*\(/.test(app) || /let\s+[^;]*\bsetSession\b[^;]*;/.test(app)],
   ['Core enterApp exists', /async\s+function\s+enterApp\s*\(/.test(app)],
   ['Core saveProject exists', /async\s+function\s+saveProject\s*\(/.test(app)],
-  ['Core renderProject exists', /function\s+renderProject\s*\(/.test(app)],
+  ['Project shell renderProject binding exists', /let\s+[^;]*\brenderProject\b[^;]*;/.test(app)],
+  ['Project shell owns renderProject', projectShell.includes('renderProject = (tab) =>')],
+  ['Project shell owns project word/progress helpers', projectShell.includes('projectWords = (p) =>') && projectShell.includes('projectPct = (p) =>')],
   ['Core renderAdmin exists', /async\s+function\s+renderAdmin\s*\(/.test(app) || /function\s+renderAdmin\s*\(/.test(app)],
   ['Profile shell owns profile rendering', profileShell.includes('renderProfile = async () =>')],
   ['Profile shell owns global shell binding', profileShell.includes('bindGlobal = () =>')],

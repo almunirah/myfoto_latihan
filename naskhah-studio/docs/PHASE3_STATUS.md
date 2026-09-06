@@ -15,6 +15,7 @@
 - Batch C writer/editor runtime extraction: completed
 - Batch D1 secondary workspace views extraction: completed
 - Batch D2 overview/deadlines/submission tracking extraction: completed
+- Batch D3 workspace tab bindings extraction: completed
 
 ## Current runtime ownership
 
@@ -34,31 +35,32 @@ Live core responsibilities delegated through `NaskhahCore`:
 
 `js/modules/writer.js` owns the writing/editor experience, including autosave, manual save, undo/redo, formatting, table insertion, image upload and image hydration.
 
-`js/modules/overview-tracking.js` now owns:
+`js/modules/overview-tracking.js` owns Overview, Writing Goals, deadlines, supervisor/final submission tracking, journal tracking and revision tracking.
 
-- `overviewView`
-- `deadlinesView`
-- `specialSubmissionView`
-- overview goal/deadline bindings
-- supervisor / final submission tracking bindings
-- article journal tracking bindings
-- article revision add/delete bindings
-- overview-specific `bindTab` delegation while non-overview tabs continue through the preserved legacy binding path
+`js/modules/workspace-views.js` owns the view rendering for Outline, Checklist, Research Notes, References and Export.
 
-`js/modules/workspace-views.js` owns Outline, Checklist, Research Notes, References and Export views.
+`js/modules/workspace-bindings.js` now owns the live interactions for:
+
+- Outline add/edit/status/target/delete
+- Checklist complete/add item
+- Research Notes add/save/delete
+- References add/save/delete/copy citation
+- TXT/DOCX/Print/Share export actions
+- workspace-specific `bindTab` delegation while Overview, Versions and other remaining tabs continue through the preserved delegation chain
 
 The existing Supabase client remains single-instance. No backend route, schema, auth rule, table name, project model, manuscript data structure or storage bucket name is changed.
 
-## Latest verification
+## Latest verification gate
 
-- Phase 2 strict runtime guard: PASS
-- Phase 3 Batch D2 ownership/load-order guard: PASS
-- Vercel Preview deployment: SUCCESS
-- PR #4: mergeable
-- production `main`: unchanged
+Batch D3 must keep all of these green:
+
+1. Phase 2 strict runtime guard
+2. Phase 3 D3 ownership/load-order guard
+3. Vercel Preview deployment
+4. PR remains mergeable
 
 Authenticated browser smoke remains a required gate before final merge because the branch Preview has previously redirected to the production custom domain in some sessions.
 
 ## Next step
 
-Continue extracting the remaining project-tab bindings and export/profile shell responsibilities. After those replacement modules are proven by CI and Preview, remove the duplicated legacy implementations from `app.js` in small reversible cleanup batches, then perform the final authenticated browser smoke before merge.
+Extract remaining stable profile/app-shell responsibilities, then begin deleting the now-proven duplicate legacy implementations from `app.js` in small reversible cleanup batches. Each cleanup batch must pass Phase 2, Phase 3 and Vercel Preview before the next deletion.

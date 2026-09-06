@@ -6,6 +6,7 @@ on:
       - naskhah-phase3-app-modularization
     paths:
       - .github/workflows/naskhah-phase3-project-persistence-cleanup.yml
+      - naskhah-studio/tools/scripts/cleanup-app-project-persistence.mjs
 
 permissions:
   contents: write

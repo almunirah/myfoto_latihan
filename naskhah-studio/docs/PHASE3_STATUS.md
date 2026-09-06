@@ -16,6 +16,7 @@
 - Batch D1 secondary workspace views extraction: completed
 - Batch D2 overview/deadlines/submission tracking extraction: completed
 - Batch D3 workspace tab bindings extraction: completed
+- Batch D4 profile/app-shell extraction: completed
 
 ## Current runtime ownership
 
@@ -37,30 +38,33 @@ Live core responsibilities delegated through `NaskhahCore`:
 
 `js/modules/overview-tracking.js` owns Overview, Writing Goals, deadlines, supervisor/final submission tracking, journal tracking and revision tracking.
 
-`js/modules/workspace-views.js` owns the view rendering for Outline, Checklist, Research Notes, References and Export.
+`js/modules/workspace-views.js` owns view rendering for Outline, Checklist, Research Notes, References and Export.
 
-`js/modules/workspace-bindings.js` now owns the live interactions for:
+`js/modules/workspace-bindings.js` owns Outline, Checklist, Research Notes, References and Export interactions plus workspace-specific `bindTab` delegation.
 
-- Outline add/edit/status/target/delete
-- Checklist complete/add item
-- Research Notes add/save/delete
-- References add/save/delete/copy citation
-- TXT/DOCX/Print/Share export actions
-- workspace-specific `bindTab` delegation while Overview, Versions and other remaining tabs continue through the preserved delegation chain
+`js/modules/profile-shell.js` now owns:
+
+- Profile & Subscription rendering
+- profile name/email update flow
+- password change flow
+- global sidebar navigation binding
+- mobile navigation / modal shell events
+- logout flow
+- state reset using `Object.assign(state, NaskhahCore.createState())` so the shared state object captured by core services is preserved instead of being replaced
 
 The existing Supabase client remains single-instance. No backend route, schema, auth rule, table name, project model, manuscript data structure or storage bucket name is changed.
 
 ## Latest verification gate
 
-Batch D3 must keep all of these green:
+Batch D4 must keep all of these green:
 
 1. Phase 2 strict runtime guard
-2. Phase 3 D3 ownership/load-order guard
+2. Phase 3 D4 ownership/load-order guard
 3. Vercel Preview deployment
 4. PR remains mergeable
 
-Authenticated browser smoke remains a required gate before final merge because the branch Preview has previously redirected to the production custom domain in some sessions.
+The Preview static smoke checker now covers every active Phase 3 runtime module in load order. Authenticated browser smoke remains a required gate before final merge because the branch Preview has previously redirected to the production custom domain in some sessions.
 
 ## Next step
 
-Extract remaining stable profile/app-shell responsibilities, then begin deleting the now-proven duplicate legacy implementations from `app.js` in small reversible cleanup batches. Each cleanup batch must pass Phase 2, Phase 3 and Vercel Preview before the next deletion.
+Begin physical duplicate cleanup in `app.js` in small reversible batches. The first cleanup should remove only implementations already fully replaced by verified modules, while preserving bootstrap, Supabase initialization, shared helper contracts, `saveProject`, `renderProject`, admin runtime and auth/bootstrap wiring until their own cleanup gate is proven. Every cleanup batch must pass Phase 2, Phase 3 and Vercel Preview before the next deletion.

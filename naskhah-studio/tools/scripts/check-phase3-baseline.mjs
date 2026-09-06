@@ -10,6 +10,7 @@ const files = {
   index: 'index.html',
   core: 'js/core/runtime.js',
   cutover: 'js/core/cutover.js',
+  projectShell: 'js/modules/project-shell.js',
   dashboard: 'js/modules/dashboard.js',
   projects: 'js/modules/projects.js',
   writer: 'js/modules/writer.js',
@@ -120,6 +121,7 @@ const requiredCutoverTokens = [
 for (const token of requiredCutoverTokens) if (!source.cutover.includes(token)) fail(`required A2 cutover token missing: ${token}`);
 
 const moduleChecks = {
+  projectShell: ['projectWords = (p) =>','projectPct = (p) =>','tabs = (active) =>','renderProject = (tab) =>',"window, 'NaskhahProjectShellModule'"],
   dashboard: ['projectCard = (p) =>','reminderCentre = () =>','renderDashboard = () =>','renderProjects = () =>',"window, 'NaskhahDashboardModule'"],
   projects: ['openCreate = () =>','createProject = async () =>','normalizeProject = (p) =>','openProject = (id) =>',"window, 'NaskhahProjectsModule'"],
   writer: ['writingView = (p) =>','bindWriter = (p) =>','openTableDialog = (ed) =>','uploadImage = async (p, ed, file) =>','hydrateImages = async (ed) =>',"from('naskhah-media')","document.execCommand('undo')","document.execCommand('redo')","window, 'NaskhahWriterModule'"],
@@ -136,6 +138,7 @@ const expectedScripts = [
   './js/core/runtime.js',
   './app.js',
   './js/core/cutover.js',
+  './js/modules/project-shell.js',
   './js/modules/dashboard.js',
   './js/modules/projects.js',
   './js/modules/writer.js',
@@ -159,9 +162,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Cleanup E5 contract is intact.');
-console.log('Legacy core, writer, view, dashboard/project and profile/app-shell implementations are physically absent from app.js and delegated to modules.');
+console.log('Phase 3 F1 project shell ownership contract is intact.');
+console.log('Project shell loads before dashboard/projects while prior cleanup contracts remain enforced.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: preserve saveProject/renderProject/admin/bootstrap until separately owned and gated.');
+console.log('Next step: verify F1, then physically remove legacy project shell implementations in a separate cleanup batch.');

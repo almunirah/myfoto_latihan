@@ -91,6 +91,13 @@ const removedLegacyDashboardProjects = [
 for (const token of removedLegacyDashboardProjects) if (source.app.includes(token)) fail(`Cleanup E4 regression: legacy dashboard/project implementation returned: ${token}`);
 if (!source.app.includes('let projectCard,renderDashboard,reminderCentre,renderProjects,openCreate,createProject,normalizeProject,openProject;')) fail('Cleanup E4 delegated dashboard/project bindings are missing.');
 
+const removedLegacyProfileShell = [
+  'async function renderProfile(',
+  'function bindGlobal('
+];
+for (const token of removedLegacyProfileShell) if (source.app.includes(token)) fail(`Cleanup E5 regression: legacy profile/app-shell implementation returned: ${token}`);
+if (!source.app.includes('let renderProfile,bindGlobal;')) fail('Cleanup E5 delegated profile/app-shell bindings are missing.');
+
 const requiredCoreTokens = [
   "window, 'NaskhahCore'",
   "supabaseUrl: 'https://nrnrmbjrczmzkgimxdun.supabase.co'",
@@ -152,9 +159,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Cleanup E4 contract is intact.');
-console.log('Legacy core, writer, view, dashboard and project lifecycle implementations are physically absent from app.js and delegated to modules.');
+console.log('Phase 3 Cleanup E5 contract is intact.');
+console.log('Legacy core, writer, view, dashboard/project and profile/app-shell implementations are physically absent from app.js and delegated to modules.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: preserve saveProject/renderProject/admin/bootstrap while preparing the next separately gated cleanup group.');
+console.log('Next step: preserve saveProject/renderProject/admin/bootstrap until separately owned and gated.');

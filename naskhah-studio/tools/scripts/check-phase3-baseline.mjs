@@ -163,6 +163,7 @@ const moduleChecks = {
   workspaceBindings: ['const bindOutline = (p) =>','const bindChecklist = (p) =>','const bindNotes = (p) =>','const bindReferences = (p) =>','const bindExport = (p) =>','bindTab = (tab) =>',"window, 'NaskhahWorkspaceBindingsModule'"],
   profileShell: ['renderProfile = async () =>','bindGlobal = () =>','Object.assign(state, window.NaskhahCore.createState())',"window, 'NaskhahProfileShellModule'"],
   adminRuntime: ['renderAdmin = async () =>','adminCreateDialog = () =>','adminEditDialog = (u) =>','adminDeleteDialog = (u) =>',"from('nv1_profiles')","from('nv1_project_metadata')","action: 'admin_create_user'","action: 'admin_delete_user'","window, 'NaskhahAdminRuntimeModule'"],
+  versions: ['window.versionsView=enhancedVersionsView','const oldBindTab=bindTab;','bindTab=function(tab)',"tab==='versions'",'window.bindTab=bindTab;'],
   bootstrap: ['bindAuth = () =>','boot = async () =>',"document.addEventListener('DOMContentLoaded', boot)","window, 'NaskhahBootstrapModule'"]
 };
 for (const [name, tokens] of Object.entries(moduleChecks)) {
@@ -201,8 +202,8 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 J1 tab-router ownership contract is intact.');
-console.log('Base writing-tab routing is module-owned while the legacy bindTab body remains temporarily available for separately gated J2 cleanup.');
+console.log('Phase 3 J1.5 tab-router and Versions lexical wrapper contract is intact.');
+console.log('Base writing-tab routing is module-owned and Versions now wraps the lexical bindTab chain explicitly; the legacy app.js bindTab body remains only for separately gated J2 cleanup.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);

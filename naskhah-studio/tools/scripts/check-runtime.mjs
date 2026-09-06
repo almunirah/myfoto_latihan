@@ -111,7 +111,7 @@ const checks = [
   ['Bootstrap owns auth form wiring', bootstrap.includes('bindAuth = () =>')],
   ['Bootstrap owns startup orchestration', bootstrap.includes('boot = async () =>') && bootstrap.includes("document.addEventListener('DOMContentLoaded', boot)")],
   ['Versions module loaded', index.includes('./js/modules/versions.js') && versions.includes('window.versionsView')],
-  ['Versions bind hook preserved', versions.includes('window.bindTab=function') && versions.includes("tab==='versions'")],
+  ['Versions lexical bind hook preserved', versions.includes('const oldBindTab=bindTab;') && versions.includes('bindTab=function(tab)') && versions.includes('window.bindTab=bindTab;') && versions.includes("tab==='versions'")],
   ['Versions persistence preserved', versions.includes('await saveProject()')],
   ['Inactive-user extension loaded', index.includes('./js/admin/inactive-users.js') && inactiveUsers.includes('window.renderAdmin')],
   ['Inactive threshold preserved', inactiveUsers.includes('90*86400000')],
@@ -130,4 +130,4 @@ for (const [name, ok] of checks) {
 }
 
 if (failed) process.exit(1);
-console.log('\nRuntime stack matches the strict Phase 3 J1 modular contract while preserving Phase 2 behavior.');
+console.log('\nRuntime stack matches the strict Phase 3 J1.5 modular contract while preserving Phase 2 behavior.');

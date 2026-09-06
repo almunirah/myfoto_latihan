@@ -14,15 +14,12 @@ const templates={
  book:{label:'Buku',target:50000,sections:['Pengenalan','Bab 1','Bab 2','Bab 3','Penutup'],phases:[['Persediaan',['Tentukan tujuan buku','Pembaca sasaran','Genre','Gaya penulisan','Target words','Deadline']],['Rangka Buku',['Tajuk','Bahagian','Bab','Subbab','Susun flow buku']],['Jadual',['Tarikh mula','Tarikh siap','Daily writing goal','Weekly writing target','Jadual bab']],['Menulis',['Tulis bab demi bab','Semak target words','Lengkapkan manuskrip']],['Suntingan',['Self edit','Grammar','Structure','Consistency','Fact checking']],['Maklum Balas',['Beta reader','Editor','Peer review','Feedback','Revision']],['Akhir',['Final proofread','Formatting','Cover','ISBN','Export','Publish']]]},
  ebook:{label:'eBook',target:15000,sections:['Pengenalan','Bab 1','Bab 2','Bab 3','Checklist / Bonus','Penutup','CTA'],phases:[['Idea & Audience',['Tentukan masalah pembaca','Persona pembaca','Outcome eBook']],['Outline',['Tajuk','Bab','Subbab','Flow']],['Content Plan',['Research','Contoh','Visual','Jadual penulisan']],['Writing',['Draft setiap bab','Lengkapkan CTA','Semak target']],['Editing',['Bahasa','Flow','Kejelasan','Fact check']],['Design & Review',['Layout','Cover','Visual','Proofread','Feedback']],['Publishing',['Final PDF','EPUB','Landing copy','Publish']]]}
 };
-let state={session:null,profile:null,projects:[],current:null,currentTab:'overview',activeSection:null,focus:false,toolsHidden:false};
+let state=window.NaskhahCore.createState();
+let authCall,setSession,loadProfile,loadProjects;
 function toast(msg,bad=false){const t=$('#toast');t.textContent=msg;t.className='toast show'+(bad?' bad':'');clearTimeout(t._x);t._x=setTimeout(()=>t.className='toast',2600)}
 function modal(html){$('#modalContent').innerHTML=html;$('#modal').classList.remove('hidden')}
 function closeModal(){$('#modal').classList.add('hidden');$('#modalContent').innerHTML=''}
 window.closeModal=closeModal;
-async function authCall(payload,admin=false){const headers={'Content-Type':'application/json','apikey':SUPABASE_KEY};if(admin){const s=(await sb.auth.getSession()).data.session;if(s)headers.Authorization='Bearer '+s.access_token}const r=await fetch(AUTH_URL,{method:'POST',headers,body:JSON.stringify(payload)});const j=await r.json();if(!r.ok)throw new Error(j.error||'Ralat');return j}
-async function setSession(a,r){const {data,error}=await sb.auth.setSession({access_token:a,refresh_token:r});if(error)throw error;state.session=data.session;await loadProfile()}
-async function loadProfile(){const u=(await sb.auth.getUser()).data.user;if(!u)return null;const {data,error}=await sb.from('nv1_profiles').select('*').eq('id',u.id).single();if(error)throw error;state.profile=data;return data}
-async function loadProjects(){const {data,error}=await sb.from('nv1_projects').select('*').order('updated_at',{ascending:false});if(error)throw error;state.projects=data||[]}
 function showPublic(panel='login'){$('#public').classList.remove('hidden');$('#app').classList.add('hidden');$$('.auth-panel').forEach(x=>x.classList.add('hidden'));$('#'+panel+'Panel').classList.remove('hidden')}
 async function enterApp(){await loadProjects();$('#public').classList.add('hidden');$('#app').classList.remove('hidden');$('#adminNav').classList.toggle('hidden',state.profile?.role!=='admin');renderDashboard()}
 function nav(name){$$('.sidebar [data-nav]').forEach(x=>x.classList.toggle('active',x.dataset.nav===name));if(innerWidth<=820)toggleNav(false)}

@@ -63,7 +63,7 @@ The existing Supabase client remains single-instance. No backend route, schema, 
 
 ## Latest verification gate
 
-Cleanup E5 runtime guard is green. Human-authored guard commit `6bf26040545ab7a91f8b32afd25525266a601337` passed Phase 2, Phase 3 and Vercel. Subsequent commits are documentation-only and do not alter runtime behavior.
+Cleanup E5 runtime guard is green. Guard commit `6bf26040545ab7a91f8b32afd25525266a601337` passed Phase 2, Phase 3 and Vercel. Documentation-only commits after that do not alter runtime behavior.
 
 The strict runtime checker validates every active Phase 3 script in exact load order. The Preview static smoke checker covers every active Phase 3 runtime module.
 

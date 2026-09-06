@@ -21,6 +21,7 @@
 - Cleanup E2 writer duplicate removal from `app.js`: completed
 - Cleanup E3 extracted view duplicate removal from `app.js`: completed
 - Cleanup E4 dashboard/project lifecycle duplicate removal from `app.js`: completed
+- Cleanup E5 profile/app-shell duplicate removal from `app.js`: completed
 
 ## Current runtime ownership
 
@@ -51,18 +52,21 @@ Cleanup E4 physically removed the already-replaced Dashboard / My Projects and p
 - `normalizeProject`
 - `openProject`
 
-The live Dashboard/My Projects implementations remain owned by `js/modules/dashboard.js`, while project creation/normalization/open lifecycle remains owned by `js/modules/projects.js`. `app.js` retains only the mutable bindings required by the classic-script delegation contract.
+Cleanup E5 physically removed the already-replaced Profile / app-shell implementations from `app.js`:
 
-`js/modules/profile-shell.js` owns Profile & Subscription rendering, profile update/password flow, global shell navigation and logout. Logout resets the existing shared state object with `Object.assign(state, NaskhahCore.createState())` so core service references remain valid.
+- `renderProfile`
+- `bindGlobal`
+
+The live Profile & Subscription rendering, profile update/password flow, global shell navigation and logout remain owned by `js/modules/profile-shell.js`. `app.js` retains only mutable compatibility bindings. Logout continues to reset the existing shared state object with `Object.assign(state, NaskhahCore.createState())` so core service references remain valid.
 
 The existing Supabase client remains single-instance. No backend route, schema, auth rule, table name, project model, manuscript data structure or storage bucket name is changed.
 
 ## Latest verification gate
 
-Cleanup E4 is green on human-authored guard commit `a5be846cd47a38362fa3e2a4acf70eb70ab2cf53`:
+Cleanup E5 is green on human-authored guard commit `6bf26040545ab7a91f8b32afd25525266a601337`:
 
 1. Phase 2 strict runtime guard: PASS
-2. Phase 3 Cleanup E4 ownership/removal guard: PASS
+2. Phase 3 Cleanup E5 ownership/removal guard: PASS
 3. Vercel Preview deployment: SUCCESS
 4. PR #4 remains mergeable
 
@@ -72,4 +76,4 @@ Authenticated browser smoke remains a required gate before final merge because t
 
 ## Next step
 
-Preserve `saveProject`, `renderProject`, admin runtime and bootstrap/auth wiring until their own ownership gates are proven. The next cleanup should target only another already-extracted responsibility group and must again pass Phase 2, Phase 3 and Vercel before continuing.
+Preserve `saveProject`, `renderProject`, admin runtime and bootstrap/auth wiring until their own ownership gates are proven. The next safe move is to extract one of those responsibilities into its own module before any further physical removal, rather than deleting critical bootstrap logic directly.

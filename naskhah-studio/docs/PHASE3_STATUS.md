@@ -11,6 +11,8 @@
 - Batch A2 preparation contract: completed
 - Batch A2 runtime cutover bridge: completed
 - Batch B1 dashboard/project-list runtime extraction: completed
+- Batch B2 project lifecycle runtime extraction: completed
+- Batch C writer/editor runtime extraction: completed
 
 ## Current runtime ownership
 
@@ -24,22 +26,42 @@ Live core responsibilities delegated through `NaskhahCore`:
 - `loadProfile`
 - `loadProjects`
 
-`js/modules/dashboard.js` now takes live runtime ownership of:
+`js/modules/dashboard.js` owns:
 
 - `projectCard`
 - `reminderCentre`
 - `renderDashboard`
 - `renderProjects`
 
-The existing Supabase client remains single-instance; no backend route, schema, auth rule, table name, project model or manuscript data structure is changed.
+`js/modules/projects.js` owns:
 
-## Verification
+- `openCreate`
+- `createProject`
+- `normalizeProject`
+- `openProject`
 
-- Phase 2 strict runtime guard: PASS
-- Phase 3 Batch B1 ownership/load-order guard: PASS
-- Vercel Preview deployment: SUCCESS
-- PR #4 remains mergeable
+`js/modules/writer.js` owns:
+
+- `writingView`
+- `bindWriter`
+- autosave/manual save flow
+- undo/redo and formatting controls
+- focus/tools toggles
+- table insertion
+- image upload to `naskhah-media`
+- signed URL image hydration
+
+The existing Supabase client remains single-instance. No backend route, schema, auth rule, table name, project model, manuscript data structure or storage bucket name is changed.
+
+## Verification gate
+
+Batch C requires all of the following to remain green:
+
+1. Phase 2 strict runtime guard
+2. Phase 3 ownership/load-order guard
+3. Vercel Preview deployment
+4. browser smoke regression for login, Dashboard, project open, writing/autosave/manual save, Versions, admin and logout
 
 ## Next step
 
-Run browser smoke regression against PR #4 Preview for user/admin login, Dashboard, My Projects, project open/save, Versions and logout. Once green, continue with the next reversible ownership batch: project creation/open lifecycle, followed by writer/editor runtime. Duplicate legacy implementations inside `app.js` will be removed only after the replacement modules are proven stable.
+After Batch C verification is green, remove the now-duplicated writer/editor implementations from `app.js` in a separate reversible cleanup batch. Then continue extracting remaining project tabs and export/profile/admin runtime before final `app.js` reduction.

@@ -1,0 +1,31 @@
+name: Naskhah Studio Phase 2 Check
+
+on:
+  pull_request:
+    paths:
+      - 'naskhah-studio/**'
+      - '.github/workflows/naskhah-phase2-check.yml'
+  push:
+    branches:
+      - naskhah-phase2-modular-runtime
+    paths:
+      - 'naskhah-studio/**'
+      - '.github/workflows/naskhah-phase2-check.yml'
+
+jobs:
+  runtime-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: naskhah-studio
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run strict runtime guard
+        run: node tools/scripts/check-runtime.mjs

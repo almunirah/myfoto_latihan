@@ -21,16 +21,29 @@
 - Cleanup F2 project-shell duplicate removal from `app.js`: completed
 - Batch G1 project persistence extraction: completed
 - Cleanup G2 legacy `saveProject` removal from `app.js`: completed
+- Batch H1 admin runtime extraction: completed
+- Cleanup H2 legacy admin runtime removal from `app.js`: completed
 
 ## Current runtime ownership
 
 `js/core/runtime.js` owns the shared core contract and `js/core/cutover.js` activates shared state/session/data services.
 
-`js/modules/project-persistence.js` now owns the shared `saveProject` persistence path. It preserves the existing `nv1_projects` update payload, updated timestamp handling and in-memory `state.projects` synchronization. Cleanup G2 physically removed the old `async function saveProject(...)` implementation from `app.js`; only `let saveProject;` remains for the classic-script compatibility contract.
+`js/modules/project-persistence.js` owns the shared `saveProject` persistence path. It preserves the existing `nv1_projects` update payload, updated timestamp handling and in-memory `state.projects` synchronization. Cleanup G2 physically removed the old `async function saveProject(...)` implementation from `app.js`; only `let saveProject;` remains for the classic-script compatibility contract.
 
 `js/modules/project-shell.js` owns `projectWords`, `projectPct`, project tab definitions/rendering, `tabs`, and `renderProject`.
 
 `js/modules/dashboard.js` owns Dashboard and My Projects listing. `js/modules/projects.js` owns create/normalize/open lifecycle. `js/modules/writer.js` owns the editor. `js/modules/overview-tracking.js`, `js/modules/workspace-views.js`, and `js/modules/workspace-bindings.js` own the project workspace. `js/modules/profile-shell.js` owns Profile & Subscription plus global app-shell/logout. Logout preserves the shared state object reference with `Object.assign(state, NaskhahCore.createState())`.
+
+`js/admin/runtime.js` now owns the main admin runtime:
+
+- `renderAdmin`
+- Add User dialog / `admin_create_user`
+- Edit User profile/subscription flow
+- Delete User dialog / `admin_delete_user`
+- `nv1_profiles` user-management query
+- `nv1_project_metadata` metadata-only project listing
+
+Cleanup H2 physically removed the four legacy admin implementations from `app.js`. `app.js` now keeps only `let renderAdmin,adminCreateDialog,adminEditDialog,adminDeleteDialog;` for classic-script delegation. `js/admin/inactive-users.js` now wraps the lexical `renderAdmin` binding directly and republishes it through `window.renderAdmin`, preserving the inactive-user extension after physical cleanup.
 
 The existing Supabase client remains single-instance. No backend route, schema, auth rule, table name, project model, manuscript data structure or storage bucket name changed.
 
@@ -48,24 +61,25 @@ The existing Supabase client remains single-instance. No backend route, schema, 
 10. `js/modules/workspace-views.js`
 11. `js/modules/workspace-bindings.js`
 12. `js/modules/profile-shell.js`
-13. `js/modules/versions.js`
-14. `js/admin/inactive-users.js`
-15. `js/auth/login.js`
+13. `js/admin/runtime.js`
+14. `js/modules/versions.js`
+15. `js/admin/inactive-users.js`
+16. `js/auth/login.js`
 
 ## Latest verification gate
 
-Cleanup G2 is green on human-authored guard commit `9c3181e9190700b2796b5abbd093cae0ff4e4b27`:
+H1 admin ownership and the inactive-user wrapper compatibility change passed both strict CI guards before H2 physical cleanup. H2 cleanup then removed the duplicated admin implementations with a deterministic one-shot workflow and updated the Phase 3 removal guard.
+
+The human-authored guard commit carrying this status update is the verification trigger for the H2 state. Required final gate for this batch:
 
 1. Phase 2 strict runtime guard: PASS
-2. Phase 3 Cleanup G2 ownership/removal guard: PASS
+2. Phase 3 Cleanup H2 ownership/removal guard: PASS
 3. Vercel Preview deployment: SUCCESS
-4. `saveProject` legacy implementation is physically absent from `app.js`
-5. `nv1_projects` persistence is guarded in `project-persistence.js`
-
-The initial G2 one-shot attempt correctly stopped before commit when the strict guard still expected `nv1_projects` inside `app.js`. The guard was then updated to validate the new module ownership, the cleanup was rerun, and both Phase 2 and Phase 3 checks passed.
+4. PR remains mergeable
+5. `main` remains untouched
 
 Authenticated browser smoke remains required before final merge because the branch Preview has previously redirected to the production custom domain in some sessions.
 
 ## Next step
 
-Preserve admin runtime and bootstrap/auth wiring until separately extracted and gated. The next conservative target is admin runtime ownership; `bindTab`/versions cleanup should remain separate because its wrapper chain has additional runtime coupling.
+Keep bootstrap/auth wiring and the legacy `bindTab`/Versions wrapper chain separate until their own ownership gates are proven. The next conservative candidate is bootstrap/auth orchestration (`bindAuth`, `boot`, `DOMContentLoaded`) without changing login routes or session semantics.

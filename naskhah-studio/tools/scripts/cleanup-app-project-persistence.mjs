@@ -18,13 +18,20 @@ const anchorIndex = lines.indexOf(anchor);
 if (anchorIndex === -1) throw new Error('Project-shell binding anchor not found.');
 if (!lines.includes('let saveProject;')) lines.splice(anchorIndex + 1, 0, 'let saveProject;');
 
-let out = lines.join('\n');
+const out = lines.join('\n');
 if (out.includes(target)) throw new Error('Legacy saveProject implementation remains.');
 if (!out.includes('let saveProject;')) throw new Error('saveProject compatibility binding missing.');
 fs.writeFileSync(appPath, out);
 
 let check = fs.readFileSync(checkPath, 'utf8');
-check = check.replace("const requiredAppTokens = ['createClient','nv1_profiles','nv1_projects','function saveProject','function renderAdmin'];", "const requiredAppTokens = ['createClient','nv1_profiles','nv1_projects','function renderAdmin'];");
+check = check.replace(
+  "const requiredAppTokens = ['createClient','nv1_profiles','nv1_projects','function saveProject','function renderAdmin'];",
+  "const requiredAppTokens = ['createClient','nv1_profiles','function renderAdmin'];"
+);
+check = check.replace(
+  "const requiredAppTokens = ['createClient','nv1_profiles','nv1_projects','function renderAdmin'];",
+  "const requiredAppTokens = ['createClient','nv1_profiles','function renderAdmin'];"
+);
 if (!check.includes("Cleanup G2 regression: legacy saveProject implementation returned")) {
   const marker = "const requiredCoreTokens = [\n";
   const guard = "const removedLegacyProjectPersistence = ['async function saveProject('];\nfor (const token of removedLegacyProjectPersistence) if (source.app.includes(token)) fail(`Cleanup G2 regression: legacy saveProject implementation returned: ${token}`);\nif (!source.app.includes('let saveProject;')) fail('Cleanup G2 delegated saveProject binding is missing.');\n\n";

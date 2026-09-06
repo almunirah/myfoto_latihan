@@ -43,7 +43,7 @@ const source = {};
 for (const [key, file] of Object.entries(files)) source[key] = read(file);
 for (const file of Object.values(files).filter(x => x.endsWith('.js'))) syntaxOk(file);
 
-const requiredAppTokens = ['createClient','nv1_profiles','nv1_projects','function saveProject','function renderProject','function renderAdmin'];
+const requiredAppTokens = ['createClient','nv1_profiles','nv1_projects','function saveProject','function renderAdmin'];
 for (const token of requiredAppTokens) if (!source.app.includes(token)) fail(`required app.js token missing: ${token}`);
 
 const removedLegacyCore = [
@@ -98,6 +98,16 @@ const removedLegacyProfileShell = [
 ];
 for (const token of removedLegacyProfileShell) if (source.app.includes(token)) fail(`Cleanup E5 regression: legacy profile/app-shell implementation returned: ${token}`);
 if (!source.app.includes('let renderProfile,bindGlobal;')) fail('Cleanup E5 delegated profile/app-shell bindings are missing.');
+
+const removedLegacyProjectShell = [
+  'function projectWords(',
+  'function projectPct(',
+  'const tabDefs=',
+  'function tabs(',
+  'function renderProject('
+];
+for (const token of removedLegacyProjectShell) if (source.app.includes(token)) fail(`Cleanup F2 regression: legacy project-shell implementation returned: ${token}`);
+if (!source.app.includes('let projectWords,projectPct,tabs,renderProject;')) fail('Cleanup F2 delegated project-shell bindings are missing.');
 
 const requiredCoreTokens = [
   "window, 'NaskhahCore'",
@@ -162,9 +172,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 F1 project shell ownership contract is intact.');
-console.log('Project shell loads before dashboard/projects while prior cleanup contracts remain enforced.');
+console.log('Phase 3 Cleanup F2 contract is intact.');
+console.log('Project shell is module-owned and legacy project-shell implementations are physically absent from app.js.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: verify F1, then physically remove legacy project shell implementations in a separate cleanup batch.');
+console.log('Next step: preserve saveProject, admin runtime and bootstrap/auth until separately owned and gated.');

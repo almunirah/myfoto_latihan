@@ -15,6 +15,7 @@ const runtimeFiles = [
   'js/modules/dashboard.js',
   'js/modules/projects.js',
   'js/modules/writer.js',
+  'js/modules/tab-router.js',
   'js/modules/overview-tracking.js',
   'js/modules/workspace-views.js',
   'js/modules/workspace-bindings.js',
@@ -41,6 +42,7 @@ const core = read('js/core/runtime.js');
 const cutover = read('js/core/cutover.js');
 const projectPersistence = read('js/modules/project-persistence.js');
 const projectShell = read('js/modules/project-shell.js');
+const tabRouter = read('js/modules/tab-router.js');
 const profileShell = read('js/modules/profile-shell.js');
 const adminRuntime = read('js/admin/runtime.js');
 const login = read('js/auth/login.js');
@@ -90,6 +92,8 @@ const checks = [
   ['Project shell renderProject binding exists', /let\s+[^;]*\brenderProject\b[^;]*;/.test(app)],
   ['Project shell owns renderProject', projectShell.includes('renderProject = (tab) =>')],
   ['Project shell owns project word/progress helpers', projectShell.includes('projectWords = (p) =>') && projectShell.includes('projectPct = (p) =>')],
+  ['Tab router owns base writing route', tabRouter.includes('bindTab = (tab) =>') && tabRouter.includes("tab === 'writing'") && tabRouter.includes('bindWriter(state.current)')],
+  ['Tab router contract marker', tabRouter.includes("window, 'NaskhahTabRouterModule'")],
   ['Admin runtime owns renderAdmin', adminRuntime.includes('renderAdmin = async () =>')],
   ['Admin runtime preserves profile and metadata sources', adminRuntime.includes("from('nv1_profiles')") && adminRuntime.includes("from('nv1_project_metadata')")],
   ['Admin create action preserved', adminRuntime.includes("action: 'admin_create_user'")],
@@ -126,4 +130,4 @@ for (const [name, ok] of checks) {
 }
 
 if (failed) process.exit(1);
-console.log('\nRuntime stack matches the strict Phase 3 I2 modular contract while preserving Phase 2 behavior.');
+console.log('\nRuntime stack matches the strict Phase 3 J1 modular contract while preserving Phase 2 behavior.');

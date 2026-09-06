@@ -15,6 +15,7 @@ const files = {
   dashboard: 'js/modules/dashboard.js',
   projects: 'js/modules/projects.js',
   writer: 'js/modules/writer.js',
+  tabRouter: 'js/modules/tab-router.js',
   overview: 'js/modules/overview-tracking.js',
   workspace: 'js/modules/workspace-views.js',
   workspaceBindings: 'js/modules/workspace-bindings.js',
@@ -156,6 +157,7 @@ const moduleChecks = {
   dashboard: ['projectCard = (p) =>','reminderCentre = () =>','renderDashboard = () =>','renderProjects = () =>',"window, 'NaskhahDashboardModule'"],
   projects: ['openCreate = () =>','createProject = async () =>','normalizeProject = (p) =>','openProject = (id) =>',"window, 'NaskhahProjectsModule'"],
   writer: ['writingView = (p) =>','bindWriter = (p) =>','openTableDialog = (ed) =>','uploadImage = async (p, ed, file) =>','hydrateImages = async (ed) =>',"from('naskhah-media')","document.execCommand('undo')","document.execCommand('redo')","window, 'NaskhahWriterModule'"],
+  tabRouter: ['bindTab = (tab) =>',"tab === 'writing'",'bindWriter(state.current)',"window, 'NaskhahTabRouterModule'"],
   overview: ['overviewView = (p) =>','deadlinesView = (p) =>','specialSubmissionView = (p) =>','const bindOverview = (p) =>','bindTab = (tab) =>',"window, 'NaskhahOverviewTrackingModule'"],
   workspace: ['outlineView = (p) =>','checklistView = (p) =>','notesView = (p) =>','referencesView = (p) =>','exportView = (p) =>',"window, 'NaskhahWorkspaceViewsModule'"],
   workspaceBindings: ['const bindOutline = (p) =>','const bindChecklist = (p) =>','const bindNotes = (p) =>','const bindReferences = (p) =>','const bindExport = (p) =>','bindTab = (tab) =>',"window, 'NaskhahWorkspaceBindingsModule'"],
@@ -176,6 +178,7 @@ const expectedScripts = [
   './js/modules/dashboard.js',
   './js/modules/projects.js',
   './js/modules/writer.js',
+  './js/modules/tab-router.js',
   './js/modules/overview-tracking.js',
   './js/modules/workspace-views.js',
   './js/modules/workspace-bindings.js',
@@ -198,9 +201,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Cleanup I2 bootstrap/auth orchestration contract is intact.');
-console.log('Admin runtime and bootstrap/auth orchestration are module-owned; duplicated legacy implementations are physically absent from app.js.');
+console.log('Phase 3 J1 tab-router ownership contract is intact.');
+console.log('Base writing-tab routing is module-owned while the legacy bindTab body remains temporarily available for separately gated J2 cleanup.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: keep bindTab/version wrapper cleanup separately gated, then run final authenticated browser smoke before merge.');
+console.log('Next step: verify J1 in Preview, then perform separately gated J2 legacy bindTab removal before Versions wrapper cleanup.');

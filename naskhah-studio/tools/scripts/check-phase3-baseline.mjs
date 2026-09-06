@@ -45,7 +45,7 @@ const source = {};
 for (const [key, file] of Object.entries(files)) source[key] = read(file);
 for (const file of Object.values(files).filter(x => x.endsWith('.js'))) syntaxOk(file);
 
-const requiredAppTokens = ['createClient','nv1_profiles','function renderAdmin'];
+const requiredAppTokens = ['createClient','function bindAuth','async function boot'];
 for (const token of requiredAppTokens) if (!source.app.includes(token)) fail(`required app.js token missing: ${token}`);
 
 const removedLegacyCore = [
@@ -115,6 +115,15 @@ const removedLegacyProjectPersistence = ['async function saveProject('];
 for (const token of removedLegacyProjectPersistence) if (source.app.includes(token)) fail(`Cleanup G2 regression: legacy saveProject implementation returned: ${token}`);
 if (!source.app.includes('let saveProject;')) fail('Cleanup G2 delegated saveProject binding is missing.');
 
+const removedLegacyAdmin = [
+  'async function renderAdmin(',
+  'function adminCreateDialog(',
+  'function adminEditDialog(',
+  'function adminDeleteDialog('
+];
+for (const token of removedLegacyAdmin) if (source.app.includes(token)) fail(`Cleanup H2 regression: legacy admin implementation returned: ${token}`);
+if (!source.app.includes('let renderAdmin,adminCreateDialog,adminEditDialog,adminDeleteDialog;')) fail('Cleanup H2 delegated admin bindings are missing.');
+
 const requiredCoreTokens = [
   "window, 'NaskhahCore'",
   "supabaseUrl: 'https://nrnrmbjrczmzkgimxdun.supabase.co'",
@@ -182,9 +191,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Batch H1 admin runtime ownership contract is intact.');
-console.log('Admin panel rendering and user-management dialogs are module-owned while legacy app.js implementations remain as rollback fallback.');
+console.log('Phase 3 Cleanup H2 admin runtime contract is intact.');
+console.log('Admin panel rendering and user-management dialogs are module-owned; duplicated legacy admin implementations are physically absent from app.js.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: verify Preview/CI, then separately gate physical admin cleanup before touching bootstrap/auth wiring.');
+console.log('Next step: keep bootstrap/auth and bindTab/version wrapper wiring separate until their own ownership gates are proven.');

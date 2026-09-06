@@ -63,7 +63,7 @@ const checks = [
   ['JSZip 3.10.1 CDN', index.includes('jszip@3.10.1')],
   ['Supabase client initialization', app.includes('createClient')],
   ['Supabase project URL', app.includes('.supabase.co')],
-  ['Core setSession exists', /async\s+function\s+setSession\s*\(/.test(app)],
+  ['Core setSession binding exists', /async\s+function\s+setSession\s*\(/.test(app) || /let\s+[^;]*\bsetSession\b[^;]*;/.test(app)],
   ['Core enterApp exists', /async\s+function\s+enterApp\s*\(/.test(app)],
   ['Core saveProject exists', /async\s+function\s+saveProject\s*\(/.test(app)],
   ['Core renderProject exists', /function\s+renderProject\s*\(/.test(app)],

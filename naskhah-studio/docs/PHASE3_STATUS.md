@@ -23,6 +23,8 @@
 - Cleanup G2 legacy `saveProject` removal from `app.js`: completed
 - Batch H1 admin runtime extraction: completed
 - Cleanup H2 legacy admin runtime removal from `app.js`: completed
+- Batch I1 bootstrap/auth orchestration extraction: completed
+- Cleanup I2 legacy `bindAuth` / `boot` / duplicate `DOMContentLoaded` startup removal: completed
 
 ## Current runtime ownership
 
@@ -34,16 +36,11 @@
 
 `js/modules/dashboard.js` owns Dashboard and My Projects listing. `js/modules/projects.js` owns create/normalize/open lifecycle. `js/modules/writer.js` owns the editor. `js/modules/overview-tracking.js`, `js/modules/workspace-views.js`, and `js/modules/workspace-bindings.js` own the project workspace. `js/modules/profile-shell.js` owns Profile & Subscription plus global app-shell/logout. Logout preserves the shared state object reference with `Object.assign(state, NaskhahCore.createState())`.
 
-`js/admin/runtime.js` owns the main admin runtime:
+`js/admin/runtime.js` owns the main admin runtime: `renderAdmin`, Add User / `admin_create_user`, Edit User profile/subscription flow, Delete User / `admin_delete_user`, `nv1_profiles` user-management query and `nv1_project_metadata` metadata-only project listing. `js/admin/inactive-users.js` remains the inactive-user extension and wraps the lexical `renderAdmin` binding.
 
-- `renderAdmin`
-- Add User dialog / `admin_create_user`
-- Edit User profile/subscription flow
-- Delete User dialog / `admin_delete_user`
-- `nv1_profiles` user-management query
-- `nv1_project_metadata` metadata-only project listing
+`js/core/bootstrap.js` now owns the remaining startup/auth orchestration: `bindAuth`, `boot`, forgot/reset form wiring, session restoration, active-profile startup check and the sole app bootstrap `DOMContentLoaded` registration. `app.js` retains only `let bindAuth,boot;` for classic-script compatibility. The legacy `bindAuth`, `boot` and old `document.addEventListener('DOMContentLoaded',boot)` registration are physically absent from `app.js`.
 
-Cleanup H2 physically removed the four legacy admin implementations from `app.js`. `app.js` now keeps only `let renderAdmin,adminCreateDialog,adminEditDialog,adminDeleteDialog;` for classic-script delegation. `js/admin/inactive-users.js` wraps the lexical `renderAdmin` binding directly and republishes it through `window.renderAdmin`, preserving the inactive-user extension after physical cleanup.
+`js/auth/login.js` remains loaded immediately before `js/core/bootstrap.js`. Its capture-phase login/admin listeners are therefore registered before bootstrap startup while preserving the Phase 2 login guards and `/functions/v1/naskhah-login` route.
 
 The existing Supabase client remains single-instance. No backend route, schema, auth rule, table name, project model, manuscript data structure or storage bucket name changed.
 
@@ -65,16 +62,19 @@ The existing Supabase client remains single-instance. No backend route, schema, 
 14. `js/modules/versions.js`
 15. `js/admin/inactive-users.js`
 16. `js/auth/login.js`
+17. `js/core/bootstrap.js`
 
 ## Latest verification gate
 
-Cleanup H2 is green on human-authored guard commit `f46ddc5bf780970f782fb21065504e36c0f82bd6`:
+Cleanup I2 has completed physically on the branch. The one-shot cleanup commit is followed by this human-authored status commit so normal PR checks can run on the final I2 tree.
+
+Required final I2 gate:
 
 1. Phase 2 strict runtime guard: PASS
-2. Phase 3 Cleanup H2 ownership/removal guard: PASS
+2. Phase 3 Cleanup I2 ownership/removal guard: PASS
 3. Vercel Preview deployment: SUCCESS
-4. Legacy admin implementations are physically absent from `app.js`
-5. Admin runtime preserves `nv1_profiles`, `nv1_project_metadata`, `admin_create_user` and `admin_delete_user` contracts
+4. Legacy `bindAuth`, `boot` and duplicate app bootstrap registration physically absent from `app.js`
+5. `js/core/bootstrap.js` is the guarded bootstrap owner and loads after `js/auth/login.js`
 6. PR #4 remains open and mergeable
 7. `main` remains untouched
 
@@ -82,4 +82,4 @@ Authenticated browser smoke remains required before final merge because the bran
 
 ## Next step
 
-Keep bootstrap/auth wiring and the legacy `bindTab`/Versions wrapper chain separate until their own ownership gates are proven. The next conservative candidate is bootstrap/auth orchestration (`bindAuth`, `boot`, `DOMContentLoaded`) without changing login routes, role checks, forgot/reset flow or session semantics.
+After the I2 gates are green, keep the legacy `bindTab` / Versions wrapper-chain cleanup as a separately gated batch. Then perform the final authenticated browser smoke before considering PR #4 for merge.

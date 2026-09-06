@@ -45,6 +45,16 @@ for (const file of Object.values(files).filter(x => x.endsWith('.js'))) syntaxOk
 const requiredAppTokens = ['createClient','nv1_profiles','nv1_projects','function saveProject','function renderProject','function renderAdmin'];
 for (const token of requiredAppTokens) if (!source.app.includes(token)) fail(`required app.js token missing: ${token}`);
 
+const removedLegacyCore = [
+  'async function authCall(',
+  'async function setSession(',
+  'async function loadProfile(',
+  'async function loadProjects('
+];
+for (const token of removedLegacyCore) if (source.app.includes(token)) fail(`Cleanup E1 regression: legacy core implementation returned: ${token}`);
+if (!source.app.includes('let state=window.NaskhahCore.createState();')) fail('Cleanup E1 shared state initialization is missing.');
+if (!source.app.includes('let authCall,setSession,loadProfile,loadProjects;')) fail('Cleanup E1 delegated core bindings are missing.');
+
 const requiredCoreTokens = [
   "window, 'NaskhahCore'",
   "supabaseUrl: 'https://nrnrmbjrczmzkgimxdun.supabase.co'",
@@ -106,9 +116,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Batch D4 profile/app-shell ownership contract is intact.');
-console.log('Profile rendering and global shell/logout handling are delegated while preserving shared state identity.');
+console.log('Phase 3 Cleanup E1 contract is intact.');
+console.log('Legacy core service implementations are physically absent from app.js and delegated through NaskhahCore.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: Preview regression, then begin small verified duplicate cleanup batches in app.js.');
+console.log('Next step: remove the next verified duplicate ownership group in a separate reversible cleanup batch.');

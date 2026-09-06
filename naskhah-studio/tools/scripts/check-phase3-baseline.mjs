@@ -55,6 +55,16 @@ for (const token of removedLegacyCore) if (source.app.includes(token)) fail(`Cle
 if (!source.app.includes('let state=window.NaskhahCore.createState();')) fail('Cleanup E1 shared state initialization is missing.');
 if (!source.app.includes('let authCall,setSession,loadProfile,loadProjects;')) fail('Cleanup E1 delegated core bindings are missing.');
 
+const removedLegacyWriter = [
+  'function writingView(',
+  'function bindWriter(',
+  'function openTableDialog(',
+  'async function uploadImage(',
+  'async function hydrateImages('
+];
+for (const token of removedLegacyWriter) if (source.app.includes(token)) fail(`Cleanup E2 regression: legacy writer implementation returned: ${token}`);
+if (!source.app.includes('let writingView,bindWriter,openTableDialog,uploadImage,hydrateImages;')) fail('Cleanup E2 delegated writer bindings are missing.');
+
 const requiredCoreTokens = [
   "window, 'NaskhahCore'",
   "supabaseUrl: 'https://nrnrmbjrczmzkgimxdun.supabase.co'",
@@ -116,8 +126,8 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Cleanup E1 contract is intact.');
-console.log('Legacy core service implementations are physically absent from app.js and delegated through NaskhahCore.');
+console.log('Phase 3 Cleanup E2 contract is intact.');
+console.log('Legacy core and writer implementations are physically absent from app.js and delegated to modules.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);

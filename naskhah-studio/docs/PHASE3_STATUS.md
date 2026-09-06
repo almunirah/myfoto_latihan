@@ -34,7 +34,7 @@
 
 `js/modules/dashboard.js` owns Dashboard and My Projects listing. `js/modules/projects.js` owns create/normalize/open lifecycle. `js/modules/writer.js` owns the editor. `js/modules/overview-tracking.js`, `js/modules/workspace-views.js`, and `js/modules/workspace-bindings.js` own the project workspace. `js/modules/profile-shell.js` owns Profile & Subscription plus global app-shell/logout. Logout preserves the shared state object reference with `Object.assign(state, NaskhahCore.createState())`.
 
-`js/admin/runtime.js` now owns the main admin runtime:
+`js/admin/runtime.js` owns the main admin runtime:
 
 - `renderAdmin`
 - Add User dialog / `admin_create_user`
@@ -43,7 +43,7 @@
 - `nv1_profiles` user-management query
 - `nv1_project_metadata` metadata-only project listing
 
-Cleanup H2 physically removed the four legacy admin implementations from `app.js`. `app.js` now keeps only `let renderAdmin,adminCreateDialog,adminEditDialog,adminDeleteDialog;` for classic-script delegation. `js/admin/inactive-users.js` now wraps the lexical `renderAdmin` binding directly and republishes it through `window.renderAdmin`, preserving the inactive-user extension after physical cleanup.
+Cleanup H2 physically removed the four legacy admin implementations from `app.js`. `app.js` now keeps only `let renderAdmin,adminCreateDialog,adminEditDialog,adminDeleteDialog;` for classic-script delegation. `js/admin/inactive-users.js` wraps the lexical `renderAdmin` binding directly and republishes it through `window.renderAdmin`, preserving the inactive-user extension after physical cleanup.
 
 The existing Supabase client remains single-instance. No backend route, schema, auth rule, table name, project model, manuscript data structure or storage bucket name changed.
 
@@ -68,18 +68,18 @@ The existing Supabase client remains single-instance. No backend route, schema, 
 
 ## Latest verification gate
 
-H1 admin ownership and the inactive-user wrapper compatibility change passed both strict CI guards before H2 physical cleanup. H2 cleanup then removed the duplicated admin implementations with a deterministic one-shot workflow and updated the Phase 3 removal guard.
-
-The human-authored guard commit carrying this status update is the verification trigger for the H2 state. Required final gate for this batch:
+Cleanup H2 is green on human-authored guard commit `f46ddc5bf780970f782fb21065504e36c0f82bd6`:
 
 1. Phase 2 strict runtime guard: PASS
 2. Phase 3 Cleanup H2 ownership/removal guard: PASS
 3. Vercel Preview deployment: SUCCESS
-4. PR remains mergeable
-5. `main` remains untouched
+4. Legacy admin implementations are physically absent from `app.js`
+5. Admin runtime preserves `nv1_profiles`, `nv1_project_metadata`, `admin_create_user` and `admin_delete_user` contracts
+6. PR #4 remains open and mergeable
+7. `main` remains untouched
 
 Authenticated browser smoke remains required before final merge because the branch Preview has previously redirected to the production custom domain in some sessions.
 
 ## Next step
 
-Keep bootstrap/auth wiring and the legacy `bindTab`/Versions wrapper chain separate until their own ownership gates are proven. The next conservative candidate is bootstrap/auth orchestration (`bindAuth`, `boot`, `DOMContentLoaded`) without changing login routes or session semantics.
+Keep bootstrap/auth wiring and the legacy `bindTab`/Versions wrapper chain separate until their own ownership gates are proven. The next conservative candidate is bootstrap/auth orchestration (`bindAuth`, `boot`, `DOMContentLoaded`) without changing login routes, role checks, forgot/reset flow or session semantics.

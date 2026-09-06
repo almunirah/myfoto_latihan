@@ -1,0 +1,28 @@
+name: Naskhah Studio Phase 3 Baseline
+
+on:
+  pull_request:
+    paths:
+      - 'naskhah-studio/**'
+      - '.github/workflows/naskhah-phase3-baseline.yml'
+  push:
+    branches:
+      - 'naskhah-phase3-*'
+    paths:
+      - 'naskhah-studio/**'
+      - '.github/workflows/naskhah-phase3-baseline.yml'
+
+jobs:
+  baseline-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Phase 2 strict runtime guard
+        working-directory: naskhah-studio
+        run: node tools/scripts/check-runtime.mjs
+      - name: Phase 3 baseline guard
+        working-directory: naskhah-studio
+        run: node tools/scripts/check-phase3-baseline.mjs

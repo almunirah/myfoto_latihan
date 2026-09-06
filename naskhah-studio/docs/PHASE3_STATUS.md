@@ -9,25 +9,29 @@
 - Dedicated GitHub Actions baseline workflow: added
 - Batch A1 core bridge: completed
 - Batch A2 preparation contract: completed
+- Batch A2 runtime cutover bridge: completed
 
 ## Current gate
 
-The shared core contract now lives in `js/core/runtime.js` and defines:
+`js/core/runtime.js` now owns the shared core contract and `js/core/cutover.js` activates that contract after `app.js` declarations but before the Phase 2 feature modules load.
 
-- authoritative Supabase URL / Edge Function route / table map
-- a shared application state factory
-- DOM and text helpers
-- session/profile/project service factories that accept the existing Supabase client
+The A2 cutover currently delegates these live runtime responsibilities through `NaskhahCore` while preserving the legacy names expected by downstream scripts:
 
-This preparation intentionally creates **no second Supabase client** and does **not** remove the legacy globals from `app.js` yet. That cutover is the next reversible edit, after the A2-prep guard and Vercel Preview remain green.
+- shared application state initialization
+- `authCall`
+- `setSession`
+- `loadProfile`
+- `loadProjects`
+
+The existing Supabase client remains single-instance; no backend route, schema, auth rule, table name, project model or manuscript data structure is changed.
+
+## Verification
+
+- Phase 2 strict runtime guard: PASS
+- Phase 3 A2 ownership/load-order guard: PASS
+- Vercel Preview deployment: SUCCESS
+- PR #4 remains mergeable
 
 ## Next step
 
-Batch A2 cutover will replace the matching `app.js` core globals with references to `NaskhahCore`, then rerun:
-
-1. Phase 2 strict runtime guard
-2. Phase 3 ownership/load-order guard
-3. Vercel Preview deployment
-4. user/admin login + project save + Versions smoke regression
-
-Only after those gates pass will work move to dashboard/projects modularization.
+Run browser smoke regression against the PR #4 Preview for user/admin login, project open/save, Versions and logout. After that gate is green, remove the now-duplicated legacy implementations from `app.js` in a separate reversible batch before dashboard/projects modularization.

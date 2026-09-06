@@ -10,6 +10,7 @@ const runtimeFiles = [
   'js/core/runtime.js',
   'app.js',
   'js/core/cutover.js',
+  'js/modules/project-persistence.js',
   'js/modules/project-shell.js',
   'js/modules/dashboard.js',
   'js/modules/projects.js',
@@ -36,6 +37,7 @@ const index = read('index.html');
 const app = read('app.js');
 const core = read('js/core/runtime.js');
 const cutover = read('js/core/cutover.js');
+const projectPersistence = read('js/modules/project-persistence.js');
 const projectShell = read('js/modules/project-shell.js');
 const profileShell = read('js/modules/profile-shell.js');
 const login = read('js/auth/login.js');
@@ -79,7 +81,8 @@ const checks = [
   ['Core cutover contract loaded', cutover.includes('window.NaskhahCore.createServices')],
   ['Core setSession compatibility binding exists', /async\s+function\s+setSession\s*\(/.test(app) || /let\s+[^;]*\bsetSession\b[^;]*;/.test(app)],
   ['Core enterApp exists', /async\s+function\s+enterApp\s*\(/.test(app)],
-  ['Core saveProject exists', /async\s+function\s+saveProject\s*\(/.test(app)],
+  ['Project persistence saveProject binding exists', /let\s+[^;]*\bsaveProject\b[^;]*;/.test(app)],
+  ['Project persistence owns saveProject', projectPersistence.includes('saveProject = async () =>')],
   ['Project shell renderProject binding exists', /let\s+[^;]*\brenderProject\b[^;]*;/.test(app)],
   ['Project shell owns renderProject', projectShell.includes('renderProject = (tab) =>')],
   ['Project shell owns project word/progress helpers', projectShell.includes('projectWords = (p) =>') && projectShell.includes('projectPct = (p) =>')],
@@ -88,7 +91,7 @@ const checks = [
   ['Profile shell owns global shell binding', profileShell.includes('bindGlobal = () =>')],
   ['Logout preserves shared state reference', profileShell.includes('Object.assign(state, window.NaskhahCore.createState())')],
   ['nv1_profiles usage', app.includes("from('nv1_profiles')") || inactiveUsers.includes("from('nv1_profiles')") || profileShell.includes("from('nv1_profiles')")],
-  ['nv1_projects usage', app.includes("from('nv1_projects')")],
+  ['nv1_projects usage', projectPersistence.includes("from('nv1_projects')")],
   ['Login Edge Function usage', login.includes('/functions/v1/naskhah-login')],
   ['Login calls setSession', login.includes('await setSession(')],
   ['User suspension guard preserved', login.includes("state.profile.status==='suspended'")],

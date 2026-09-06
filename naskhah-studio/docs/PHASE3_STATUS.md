@@ -41,21 +41,9 @@ Cleanup E2 physically removed legacy writer/editor implementations from `app.js`
 
 Cleanup E3 physically removed extracted Overview/deadline/submission and workspace-view implementations from `app.js`; the live implementations remain in `js/modules/overview-tracking.js` and `js/modules/workspace-views.js`.
 
-Cleanup E4 physically removed the already-replaced Dashboard / My Projects and project lifecycle implementations from `app.js`:
+Cleanup E4 physically removed the already-replaced Dashboard / My Projects and project lifecycle implementations from `app.js`: `projectCard`, `renderDashboard`, `reminderCentre`, `renderProjects`, `openCreate`, `createProject`, `normalizeProject`, and `openProject`.
 
-- `projectCard`
-- `renderDashboard`
-- `reminderCentre`
-- `renderProjects`
-- `openCreate`
-- `createProject`
-- `normalizeProject`
-- `openProject`
-
-Cleanup E5 physically removed the already-replaced Profile / app-shell implementations from `app.js`:
-
-- `renderProfile`
-- `bindGlobal`
+Cleanup E5 physically removed the already-replaced Profile / app-shell implementations from `app.js`: `renderProfile` and `bindGlobal`.
 
 The live Profile & Subscription rendering, profile update/password flow, global shell navigation and logout remain owned by `js/modules/profile-shell.js`. `app.js` retains only mutable compatibility bindings. Logout continues to reset the existing shared state object with `Object.assign(state, NaskhahCore.createState())` so core service references remain valid.
 

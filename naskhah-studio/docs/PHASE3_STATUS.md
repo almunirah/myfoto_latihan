@@ -20,6 +20,7 @@
 - Cleanup E1 core duplicate removal from `app.js`: completed
 - Cleanup E2 writer duplicate removal from `app.js`: completed
 - Cleanup E3 extracted view duplicate removal from `app.js`: completed
+- Cleanup E4 dashboard/project lifecycle duplicate removal from `app.js`: completed
 
 ## Current runtime ownership
 
@@ -33,42 +34,24 @@ Live core responsibilities delegated through `NaskhahCore`:
 - `loadProfile`
 - `loadProjects`
 
-Cleanup E1 physically removed the legacy `authCall`, `setSession`, `loadProfile` and `loadProjects` implementations from `app.js`. `app.js` keeps only mutable compatibility bindings required by the classic-script cutover contract.
+Cleanup E1 physically removed the legacy core service implementations from `app.js`; only mutable compatibility bindings remain.
 
-Cleanup E2 physically removed the legacy writer/editor implementations from `app.js`:
+Cleanup E2 physically removed legacy writer/editor implementations from `app.js`; `js/modules/writer.js` owns those live implementations.
 
-- `writingView`
-- `bindWriter`
-- `openTableDialog`
-- `uploadImage`
-- `hydrateImages`
+Cleanup E3 physically removed extracted Overview/deadline/submission and workspace-view implementations from `app.js`; the live implementations remain in `js/modules/overview-tracking.js` and `js/modules/workspace-views.js`.
 
-Those bindings remain declared in `app.js`, while `js/modules/writer.js` owns the live implementations.
+Cleanup E4 physically removed the already-replaced Dashboard / My Projects and project lifecycle implementations from `app.js`:
 
-Cleanup E3 physically removed the extracted project-view implementations from `app.js`:
+- `projectCard`
+- `renderDashboard`
+- `reminderCentre`
+- `renderProjects`
+- `openCreate`
+- `createProject`
+- `normalizeProject`
+- `openProject`
 
-- `overviewView`
-- `deadlinesView`
-- `specialSubmissionView`
-- `outlineView`
-- `checklistView`
-- `notesView`
-- `referencesView`
-- `exportView`
-
-The live implementations remain owned by `js/modules/overview-tracking.js` and `js/modules/workspace-views.js`.
-
-`js/modules/dashboard.js` owns Dashboard and My Projects listing.
-
-`js/modules/projects.js` owns project creation, normalization and open lifecycle.
-
-`js/modules/writer.js` owns the writing/editor experience, including autosave, manual save, undo/redo, formatting, table insertion, image upload and image hydration.
-
-`js/modules/overview-tracking.js` owns Overview, Writing Goals, deadlines, supervisor/final submission tracking, journal tracking and revision tracking.
-
-`js/modules/workspace-views.js` owns view rendering for Outline, Checklist, Research Notes, References and Export.
-
-`js/modules/workspace-bindings.js` owns Outline, Checklist, Research Notes, References and Export interactions plus workspace-specific `bindTab` delegation.
+The live Dashboard/My Projects implementations remain owned by `js/modules/dashboard.js`, while project creation/normalization/open lifecycle remains owned by `js/modules/projects.js`. `app.js` retains only the mutable bindings required by the classic-script delegation contract.
 
 `js/modules/profile-shell.js` owns Profile & Subscription rendering, profile update/password flow, global shell navigation and logout. Logout resets the existing shared state object with `Object.assign(state, NaskhahCore.createState())` so core service references remain valid.
 
@@ -76,17 +59,17 @@ The existing Supabase client remains single-instance. No backend route, schema, 
 
 ## Latest verification gate
 
-Cleanup E3 is green on the current human-authored guard commit:
+Cleanup E4 is green on human-authored guard commit `a5be846cd47a38362fa3e2a4acf70eb70ab2cf53`:
 
 1. Phase 2 strict runtime guard: PASS
-2. Phase 3 Cleanup E3 ownership/removal guard: PASS
+2. Phase 3 Cleanup E4 ownership/removal guard: PASS
 3. Vercel Preview deployment: SUCCESS
 4. PR #4 remains mergeable
 
-The strict runtime checker now validates every active Phase 3 script in exact load order. The Preview static smoke checker also covers every active Phase 3 runtime module.
+The strict runtime checker validates every active Phase 3 script in exact load order. The Preview static smoke checker covers every active Phase 3 runtime module.
 
 Authenticated browser smoke remains a required gate before final merge because the branch Preview has previously redirected to the production custom domain in some sessions.
 
 ## Next step
 
-Continue physical duplicate removal in another small reversible batch. The safest next candidates are the already-replaced Dashboard / My Projects and project lifecycle implementations. Preserve `saveProject`, `renderProject`, admin runtime and bootstrap/auth wiring until their own ownership and cleanup gates are proven.
+Preserve `saveProject`, `renderProject`, admin runtime and bootstrap/auth wiring until their own ownership gates are proven. The next cleanup should target only another already-extracted responsibility group and must again pass Phase 2, Phase 3 and Vercel before continuing.

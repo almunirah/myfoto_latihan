@@ -13,6 +13,7 @@ const files = {
   dashboard: 'js/modules/dashboard.js',
   projects: 'js/modules/projects.js',
   writer: 'js/modules/writer.js',
+  overview: 'js/modules/overview-tracking.js',
   workspace: 'js/modules/workspace-views.js',
   versions: 'js/modules/versions.js',
   admin: 'js/admin/inactive-users.js',
@@ -67,6 +68,7 @@ const moduleChecks = {
   dashboard: ['projectCard = (p) =>','reminderCentre = () =>','renderDashboard = () =>','renderProjects = () =>',"window, 'NaskhahDashboardModule'"],
   projects: ['openCreate = () =>','createProject = async () =>','normalizeProject = (p) =>','openProject = (id) =>',"window, 'NaskhahProjectsModule'"],
   writer: ['writingView = (p) =>','bindWriter = (p) =>','openTableDialog = (ed) =>','uploadImage = async (p, ed, file) =>','hydrateImages = async (ed) =>',"from('naskhah-media')","document.execCommand('undo')","document.execCommand('redo')","window, 'NaskhahWriterModule'"],
+  overview: ['overviewView = (p) =>','deadlinesView = (p) =>','specialSubmissionView = (p) =>','const bindOverview = (p) =>','bindTab = (tab) =>',"window, 'NaskhahOverviewTrackingModule'"],
   workspace: ['outlineView = (p) =>','checklistView = (p) =>','notesView = (p) =>','referencesView = (p) =>','exportView = (p) =>',"window, 'NaskhahWorkspaceViewsModule'"]
 };
 for (const [name, tokens] of Object.entries(moduleChecks)) {
@@ -80,6 +82,7 @@ const expectedScripts = [
   './js/modules/dashboard.js',
   './js/modules/projects.js',
   './js/modules/writer.js',
+  './js/modules/overview-tracking.js',
   './js/modules/workspace-views.js',
   './js/modules/versions.js',
   './js/admin/inactive-users.js',
@@ -97,9 +100,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Batch D1 workspace view ownership contract is intact.');
-console.log('Core, dashboard, projects, writer and workspace view modules load in the expected order.');
+console.log('Phase 3 Batch D2 overview/deadline/submission ownership contract is intact.');
+console.log('Core, dashboard, projects, writer, overview tracking and workspace view modules load in the expected order.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: Preview regression, then continue modularizing overview/planning bindings and finally remove verified duplicate legacy implementations.');
+console.log('Next step: Preview regression, then continue with project tab bindings/export/profile extraction and finally remove verified duplicate legacy implementations.');

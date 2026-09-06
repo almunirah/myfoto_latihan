@@ -27,7 +27,8 @@
 - Cleanup I2 legacy `bindAuth` / `boot` / duplicate `DOMContentLoaded` startup removal: completed
 - Batch J0 `bindTab` / Versions wrapper audit: completed
 - Batch J1 base tab-router ownership: completed
-- Batch J1.5 Versions lexical wrapper hardening: active and guarded
+- Batch J1.5 Versions lexical wrapper hardening: completed
+- Cleanup J2 legacy `bindTab` removal from `app.js`: completed
 
 ## Current runtime ownership
 
@@ -35,9 +36,11 @@
 
 `js/modules/project-persistence.js` owns the shared `saveProject` persistence path. `js/modules/project-shell.js` owns project shell rendering and project progress helpers. `js/modules/dashboard.js` and `js/modules/projects.js` own Dashboard / My Projects and project lifecycle. `js/modules/writer.js` owns the editor.
 
-`js/modules/tab-router.js` is the base tab router. It handles `writing` by calling `bindWriter(state.current)`. `js/modules/overview-tracking.js` wraps that router for Overview, and `js/modules/workspace-bindings.js` wraps the result for Outline, Checklist, Notes, References and Export.
+`js/modules/tab-router.js` is now the base tab router. It handles `writing` by calling `bindWriter(state.current)`. `js/modules/overview-tracking.js` wraps that router for Overview, and `js/modules/workspace-bindings.js` wraps the result for Outline, Checklist, Notes, References and Export.
 
-`js/modules/versions.js` now wraps the lexical `bindTab` chain explicitly: it captures `const oldBindTab=bindTab`, assigns the enhanced Versions wrapper back to `bindTab`, and mirrors the final binding to `window.bindTab`. This removes the previous dependence on a window/global-property linkage and makes the later J2 physical cleanup safe to gate independently.
+`js/modules/versions.js` wraps the lexical `bindTab` chain explicitly: it captures `const oldBindTab=bindTab`, assigns the enhanced Versions wrapper back to `bindTab`, and mirrors the final binding to `window.bindTab`. This is now independent of the removed legacy global function implementation.
+
+Cleanup J2 physically removed the old `function bindTab(...)` body from `app.js`. `app.js` now retains only `let bindTab;` as the mutable classic-script compatibility binding.
 
 `js/modules/profile-shell.js` owns Profile & Subscription plus global app-shell/logout. Logout preserves the shared state reference with `Object.assign(state, NaskhahCore.createState())`.
 
@@ -68,21 +71,22 @@ The existing Supabase client remains single-instance. No backend route, schema, 
 
 ## Latest verification gate
 
-The Vercel build-rate limit has cleared. J0, J1 and J1.5 all produced normal Vercel Preview SUCCESS builds.
+The Vercel build-rate limit has cleared. J0, J1, J1.5 and the J2 cleanup tree all produced normal Vercel Preview SUCCESS builds.
 
-J1.5 specifically hardened the Versions wrapper before removing the legacy base `bindTab` function. The strict runtime and Phase 3 guards now validate the lexical Versions wrapper contract.
+J2 is now physically complete. The strict runtime and Phase 3 guards require the legacy `function bindTab(...)` implementation to remain absent and require the `let bindTab;` compatibility binding plus the tab-router / lexical Versions wrapper chain.
 
-Required J1.5 final gate on this human-authored status commit:
+Required J2 final gate on this human-authored status commit:
 
 1. Phase 2 strict runtime guard: PASS
-2. Phase 3 J1.5 tab-router / Versions lexical wrapper guard: PASS
+2. Phase 3 Cleanup J2 ownership/removal guard: PASS
 3. Vercel Preview deployment: SUCCESS
 4. PR #4 remains open and mergeable
 5. `main` remains untouched
-6. legacy `function bindTab(...)` remains in `app.js` until separately gated J2 cleanup
+6. no second Supabase client
+7. no schema / Edge Function / manuscript/project data-model changes
 
 Authenticated browser smoke remains required before final merge because the branch Preview has previously redirected to the production custom domain in some sessions.
 
 ## Next step
 
-If this J1.5 final gate stays green, proceed to J2: physically remove only the legacy `function bindTab(...)` body from `app.js`, retain a mutable `let bindTab;` compatibility binding, strengthen the regression guard, and verify Phase 2 + Phase 3 + Vercel again. After J2, review whether any remaining Versions compatibility surface can be simplified without changing behavior.
+With J2 green, Phase 3 code modularization is effectively complete. Remaining merge gates are final authenticated browser smoke and a final PR/Preview verification. Do not merge PR #4 until those final checks are explicitly confirmed.

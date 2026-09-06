@@ -9,6 +9,7 @@ const appPath = path.join(root, 'app.js');
 const indexPath = path.join(root, 'index.html');
 const corePath = path.join(root, 'js/core/runtime.js');
 const cutoverPath = path.join(root, 'js/core/cutover.js');
+const dashboardPath = path.join(root, 'js/modules/dashboard.js');
 
 function fail(message) {
   console.error(`Phase 3 baseline check failed: ${message}`);
@@ -24,7 +25,8 @@ for (const [file, full] of [
   ['app.js', appPath],
   ['index.html', indexPath],
   ['js/core/runtime.js', corePath],
-  ['js/core/cutover.js', cutoverPath]
+  ['js/core/cutover.js', cutoverPath],
+  ['js/modules/dashboard.js', dashboardPath]
 ]) {
   if (!fs.existsSync(full)) fail(`${file} is missing`);
 }
@@ -32,6 +34,7 @@ for (const [file, full] of [
 syntaxOk('app.js');
 syntaxOk('js/core/runtime.js');
 syntaxOk('js/core/cutover.js');
+syntaxOk('js/modules/dashboard.js');
 syntaxOk('js/auth/login.js');
 syntaxOk('js/modules/versions.js');
 syntaxOk('js/admin/inactive-users.js');
@@ -40,6 +43,7 @@ const app = fs.readFileSync(appPath, 'utf8');
 const index = fs.readFileSync(indexPath, 'utf8');
 const core = fs.readFileSync(corePath, 'utf8');
 const cutover = fs.readFileSync(cutoverPath, 'utf8');
+const dashboard = fs.readFileSync(dashboardPath, 'utf8');
 
 const requiredAppTokens = [
   'createClient',
@@ -85,10 +89,23 @@ for (const token of requiredCutoverTokens) {
   if (!cutover.includes(token)) fail(`required A2 cutover token missing: ${token}`);
 }
 
+const requiredDashboardTokens = [
+  'projectCard = (p) =>',
+  'reminderCentre = () =>',
+  'renderDashboard = () =>',
+  'renderProjects = () =>',
+  "window, 'NaskhahDashboardModule'"
+];
+
+for (const token of requiredDashboardTokens) {
+  if (!dashboard.includes(token)) fail(`required Batch B1 dashboard token missing: ${token}`);
+}
+
 const expectedScripts = [
   './js/core/runtime.js',
   './app.js',
   './js/core/cutover.js',
+  './js/modules/dashboard.js',
   './js/modules/versions.js',
   './js/admin/inactive-users.js',
   './js/auth/login.js'
@@ -112,9 +129,9 @@ const functionMatches = app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w
 const lineCount = app.split(/\r?\n/).length;
 const byteCount = Buffer.byteLength(app, 'utf8');
 
-console.log('Phase 3 Batch A2 cutover contract is intact.');
-console.log('Core runtime loads before app.js; cutover delegates state/session/data services before downstream modules load.');
+console.log('Phase 3 Batch B1 dashboard ownership contract is intact.');
+console.log('Core cutover loads first, then dashboard/project-list ownership is delegated before downstream feature modules.');
 console.log(`app.js lines: ${lineCount}`);
 console.log(`app.js bytes: ${byteCount}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: after Preview regression, remove duplicated legacy core implementations from app.js in a separate reversible batch.');
+console.log('Next step: Preview regression, then extract project creation/open lifecycle or writer runtime in the next reversible batch.');

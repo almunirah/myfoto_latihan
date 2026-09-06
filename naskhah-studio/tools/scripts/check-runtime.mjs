@@ -19,6 +19,7 @@ const runtimeFiles = [
   'js/modules/workspace-views.js',
   'js/modules/workspace-bindings.js',
   'js/modules/profile-shell.js',
+  'js/admin/runtime.js',
   'js/modules/versions.js',
   'js/admin/inactive-users.js',
   'js/auth/login.js'
@@ -40,6 +41,7 @@ const cutover = read('js/core/cutover.js');
 const projectPersistence = read('js/modules/project-persistence.js');
 const projectShell = read('js/modules/project-shell.js');
 const profileShell = read('js/modules/profile-shell.js');
+const adminRuntime = read('js/admin/runtime.js');
 const login = read('js/auth/login.js');
 const versions = read('js/modules/versions.js');
 const inactiveUsers = read('js/admin/inactive-users.js');
@@ -86,11 +88,14 @@ const checks = [
   ['Project shell renderProject binding exists', /let\s+[^;]*\brenderProject\b[^;]*;/.test(app)],
   ['Project shell owns renderProject', projectShell.includes('renderProject = (tab) =>')],
   ['Project shell owns project word/progress helpers', projectShell.includes('projectWords = (p) =>') && projectShell.includes('projectPct = (p) =>')],
-  ['Core renderAdmin exists', /async\s+function\s+renderAdmin\s*\(/.test(app) || /function\s+renderAdmin\s*\(/.test(app)],
+  ['Admin runtime owns renderAdmin', adminRuntime.includes('renderAdmin = async () =>')],
+  ['Admin runtime preserves profile and metadata sources', adminRuntime.includes("from('nv1_profiles')") && adminRuntime.includes("from('nv1_project_metadata')")],
+  ['Admin create action preserved', adminRuntime.includes("action: 'admin_create_user'")],
+  ['Admin delete action preserved in runtime', adminRuntime.includes("action: 'admin_delete_user'")],
   ['Profile shell owns profile rendering', profileShell.includes('renderProfile = async () =>')],
   ['Profile shell owns global shell binding', profileShell.includes('bindGlobal = () =>')],
   ['Logout preserves shared state reference', profileShell.includes('Object.assign(state, window.NaskhahCore.createState())')],
-  ['nv1_profiles usage', app.includes("from('nv1_profiles')") || inactiveUsers.includes("from('nv1_profiles')") || profileShell.includes("from('nv1_profiles')")],
+  ['nv1_profiles usage', adminRuntime.includes("from('nv1_profiles')") || inactiveUsers.includes("from('nv1_profiles')") || profileShell.includes("from('nv1_profiles')")],
   ['nv1_projects usage', projectPersistence.includes("from('nv1_projects')")],
   ['Login Edge Function usage', login.includes('/functions/v1/naskhah-login')],
   ['Login calls setSession', login.includes('await setSession(')],
@@ -99,9 +104,9 @@ const checks = [
   ['Versions module loaded', index.includes('./js/modules/versions.js') && versions.includes('window.versionsView')],
   ['Versions bind hook preserved', versions.includes('window.bindTab=function') && versions.includes("tab==='versions'")],
   ['Versions persistence preserved', versions.includes('await saveProject()')],
-  ['Admin module loaded', index.includes('./js/admin/inactive-users.js') && inactiveUsers.includes('window.renderAdmin')],
+  ['Inactive-user extension loaded', index.includes('./js/admin/inactive-users.js') && inactiveUsers.includes('window.renderAdmin')],
   ['Inactive threshold preserved', inactiveUsers.includes('90*86400000')],
-  ['Admin delete action preserved', inactiveUsers.includes("action:'admin_delete_user'")],
+  ['Inactive-user delete action preserved', inactiveUsers.includes("action:'admin_delete_user'")],
   ['Exact full modular runtime load order', exactRuntimeOrder(index, runtimeFiles)],
   ['Legacy updates patch not loaded', !index.includes('./updates-v2.js')],
   ['Legacy login patch not loaded', !index.includes('./login-fix.js')],
@@ -116,4 +121,4 @@ for (const [name, ok] of checks) {
 }
 
 if (failed) process.exit(1);
-console.log('\nRuntime stack matches the strict Phase 3 modular contract while preserving Phase 2 behavior.');
+console.log('\nRuntime stack matches the strict Phase 3 H1 modular contract while preserving Phase 2 behavior.');

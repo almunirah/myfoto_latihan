@@ -16,6 +16,7 @@ const files = {
   overview: 'js/modules/overview-tracking.js',
   workspace: 'js/modules/workspace-views.js',
   workspaceBindings: 'js/modules/workspace-bindings.js',
+  profileShell: 'js/modules/profile-shell.js',
   versions: 'js/modules/versions.js',
   admin: 'js/admin/inactive-users.js',
   auth: 'js/auth/login.js'
@@ -71,7 +72,8 @@ const moduleChecks = {
   writer: ['writingView = (p) =>','bindWriter = (p) =>','openTableDialog = (ed) =>','uploadImage = async (p, ed, file) =>','hydrateImages = async (ed) =>',"from('naskhah-media')","document.execCommand('undo')","document.execCommand('redo')","window, 'NaskhahWriterModule'"],
   overview: ['overviewView = (p) =>','deadlinesView = (p) =>','specialSubmissionView = (p) =>','const bindOverview = (p) =>','bindTab = (tab) =>',"window, 'NaskhahOverviewTrackingModule'"],
   workspace: ['outlineView = (p) =>','checklistView = (p) =>','notesView = (p) =>','referencesView = (p) =>','exportView = (p) =>',"window, 'NaskhahWorkspaceViewsModule'"],
-  workspaceBindings: ['const bindOutline = (p) =>','const bindChecklist = (p) =>','const bindNotes = (p) =>','const bindReferences = (p) =>','const bindExport = (p) =>','bindTab = (tab) =>',"window, 'NaskhahWorkspaceBindingsModule'"]
+  workspaceBindings: ['const bindOutline = (p) =>','const bindChecklist = (p) =>','const bindNotes = (p) =>','const bindReferences = (p) =>','const bindExport = (p) =>','bindTab = (tab) =>',"window, 'NaskhahWorkspaceBindingsModule'"],
+  profileShell: ['renderProfile = async () =>','bindGlobal = () =>','Object.assign(state, window.NaskhahCore.createState())',"window, 'NaskhahProfileShellModule'"]
 };
 for (const [name, tokens] of Object.entries(moduleChecks)) {
   for (const token of tokens) if (!source[name].includes(token)) fail(`required ${name} token missing: ${token}`);
@@ -87,6 +89,7 @@ const expectedScripts = [
   './js/modules/overview-tracking.js',
   './js/modules/workspace-views.js',
   './js/modules/workspace-bindings.js',
+  './js/modules/profile-shell.js',
   './js/modules/versions.js',
   './js/admin/inactive-users.js',
   './js/auth/login.js'
@@ -103,9 +106,9 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Batch D3 workspace tab binding ownership contract is intact.');
-console.log('Overview and secondary workspace interactions are delegated before Versions/Admin/Auth modules load.');
+console.log('Phase 3 Batch D4 profile/app-shell ownership contract is intact.');
+console.log('Profile rendering and global shell/logout handling are delegated while preserving shared state identity.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);
 console.log(`named functions detected: ${functionMatches.length}`);
-console.log('Next step: Preview regression, then extract remaining profile/app-shell responsibilities and start verified duplicate cleanup in app.js.');
+console.log('Next step: Preview regression, then begin small verified duplicate cleanup batches in app.js.');

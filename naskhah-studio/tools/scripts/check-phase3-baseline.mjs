@@ -179,7 +179,7 @@ for (const src of expectedScripts) {
 for (const legacy of ['./updates-v2.js','./login-fix.js']) if (source.index.includes(`src="${legacy}"`)) fail(`legacy runtime patch is loaded: ${legacy}`);
 
 const functionMatches = source.app.match(/(?:^|\n)(?:async\s+)?function\s+[A-Za-z_$][\w$]*\s*\(/g) || [];
-console.log('Phase 3 Cleanup G2 contract is intact.');
+console.log('Phase 3 Cleanup G2 project-persistence contract is intact.');
 console.log('Project persistence and project shell are module-owned; legacy saveProject/project-shell implementations are physically absent from app.js.');
 console.log(`app.js lines: ${source.app.split(/\r?\n/).length}`);
 console.log(`app.js bytes: ${Buffer.byteLength(source.app, 'utf8')}`);

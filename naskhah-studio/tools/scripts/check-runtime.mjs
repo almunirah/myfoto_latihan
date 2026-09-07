@@ -15,6 +15,7 @@ const runtimeFiles = [
   'js/modules/dashboard.js',
   'js/modules/projects.js',
   'js/modules/writer.js',
+  'js/modules/language-check.js',
   'js/modules/tab-router.js',
   'js/modules/overview-tracking.js',
   'js/modules/workspace-views.js',
@@ -43,6 +44,7 @@ const cutover = read('js/core/cutover.js');
 const projectPersistence = read('js/modules/project-persistence.js');
 const projectShell = read('js/modules/project-shell.js');
 const tabRouter = read('js/modules/tab-router.js');
+const languageCheck = read('js/modules/language-check.js');
 const profileShell = read('js/modules/profile-shell.js');
 const adminRuntime = read('js/admin/runtime.js');
 const login = read('js/auth/login.js');
@@ -92,6 +94,11 @@ const checks = [
   ['Project shell renderProject binding exists', /let\s+[^;]*\brenderProject\b[^;]*;/.test(app)],
   ['Project shell owns renderProject', projectShell.includes('renderProject = (tab) =>')],
   ['Project shell owns project word/progress helpers', projectShell.includes('projectWords = (p) =>') && projectShell.includes('projectPct = (p) =>')],
+  ['Language checker loaded after writer', index.indexOf('./js/modules/writer.js') < index.indexOf('./js/modules/language-check.js') && index.indexOf('./js/modules/language-check.js') < index.indexOf('./js/modules/tab-router.js')],
+  ['Language checker contract marker', languageCheck.includes("window, 'NaskhahLanguageCheckModule'")],
+  ['Language checker preserves local-only flow', !languageCheck.includes('fetch(') && !languageCheck.includes('XMLHttpRequest')],
+  ['Language checker supports BM + English', languageCheck.includes('Bahasa Melayu') && languageCheck.includes('English') && languageCheck.includes('Auto BM + English')],
+  ['Language checker Apply and Ignore controls', languageCheck.includes('data-lang-apply') && languageCheck.includes('data-lang-ignore')],
   ['Tab router owns base writing route', tabRouter.includes('bindTab = (tab) =>') && tabRouter.includes("tab === 'writing'") && tabRouter.includes('bindWriter(state.current)')],
   ['Tab router contract marker', tabRouter.includes("window, 'NaskhahTabRouterModule'")],
   ['Base bindTab compatibility binding exists', /let\s+bindTab\s*;/.test(app)],
@@ -132,4 +139,4 @@ for (const [name, ok] of checks) {
 }
 
 if (failed) process.exit(1);
-console.log('\nRuntime stack matches the strict Phase 3 J2 modular contract while preserving Phase 2 behavior.');
+console.log('\nRuntime stack matches the strict modular contract with Phase 4A BM + English language checking enabled.');

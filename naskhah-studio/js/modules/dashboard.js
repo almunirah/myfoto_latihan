@@ -41,9 +41,25 @@
     $$('[data-open]').forEach(x=>x.onclick=()=>openProject(x.dataset.open));
   };
 
-  renderProjects = () => {
+  const projectTypes = ['article','thesis','book','ebook'];
+
+  const projectTypeFolder = (type) => `<button class="project-card" data-project-type="${type}" style="min-height:160px;display:flex;align-items:center;justify-content:center;text-align:center"><h3 style="margin:0">${esc(templates[type].label)}</h3></button>`;
+
+  const projectTitleItem = (p) => `<button class="project-card" data-open="${p.id}" style="min-height:92px;display:flex;align-items:center"><h3 style="margin:0">${esc(p.title)}</h3></button>`;
+
+  renderProjects = (type = null) => {
     nav('projects');
-    $('#main').innerHTML = `<div class="page-head"><div><h1>My Projects</h1><p>Semua manuskrip anda.</p></div><button class="btn primary" id="newProject">+ Projek Baharu</button></div><div class="project-grid">${state.projects.map(projectCard).join('')||'<div class="muted">Belum ada projek.</div>'}</div>`;
+
+    if (!type || !templates[type]) {
+      $('#main').innerHTML = `<div class="page-head"><div><h1>My Projects</h1></div><button class="btn primary" id="newProject">+ Projek Baharu</button></div><div class="project-grid">${projectTypes.map(projectTypeFolder).join('')}</div>`;
+      $('#newProject').onclick = openCreate;
+      $$('[data-project-type]').forEach(x=>x.onclick=()=>renderProjects(x.dataset.projectType));
+      return;
+    }
+
+    const projects = state.projects.filter(p=>p.project_type===type);
+    $('#main').innerHTML = `<div class="page-head"><div><button class="btn" id="backProjectTypes">← Kembali</button><h1 style="margin-top:16px">${esc(templates[type].label)}</h1></div><button class="btn primary" id="newProject">+ Projek Baharu</button></div><div class="project-grid">${projects.map(projectTitleItem).join('')}</div>`;
+    $('#backProjectTypes').onclick = ()=>renderProjects();
     $('#newProject').onclick = openCreate;
     $$('[data-open]').forEach(x=>x.onclick=()=>openProject(x.dataset.open));
   };

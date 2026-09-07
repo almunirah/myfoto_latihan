@@ -5,17 +5,30 @@ import { spawnSync } from 'node:child_process';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const appRoot = resolve(here, '../..');
-const required = [
-  'index.html',
+
+const runtimeFiles = [
+  'js/core/runtime.js',
   'app.js',
-  'styles.css',
-  'js/auth/login.js',
+  'js/core/cutover.js',
+  'js/modules/project-persistence.js',
+  'js/modules/project-shell.js',
+  'js/modules/dashboard.js',
+  'js/modules/projects.js',
+  'js/modules/writer.js',
+  'js/modules/tab-router.js',
+  'js/modules/overview-tracking.js',
+  'js/modules/workspace-views.js',
+  'js/modules/workspace-bindings.js',
+  'js/modules/profile-shell.js',
+  'js/admin/runtime.js',
   'js/modules/versions.js',
   'js/admin/inactive-users.js',
-  'assets/logo.svg'
+  'js/auth/login.js',
+  'js/core/bootstrap.js'
 ];
-const missing = required.filter((file) => !existsSync(resolve(appRoot, file)));
 
+const required = ['index.html', 'styles.css', 'assets/logo.svg', ...runtimeFiles];
+const missing = required.filter((file) => !existsSync(resolve(appRoot, file)));
 if (missing.length) {
   console.error('Naskhah Studio runtime check FAILED. Missing:');
   missing.forEach((file) => console.error(`- ${file}`));
@@ -25,9 +38,17 @@ if (missing.length) {
 const read = (file) => readFileSync(resolve(appRoot, file), 'utf8');
 const index = read('index.html');
 const app = read('app.js');
+const core = read('js/core/runtime.js');
+const cutover = read('js/core/cutover.js');
+const projectPersistence = read('js/modules/project-persistence.js');
+const projectShell = read('js/modules/project-shell.js');
+const tabRouter = read('js/modules/tab-router.js');
+const profileShell = read('js/modules/profile-shell.js');
+const adminRuntime = read('js/admin/runtime.js');
 const login = read('js/auth/login.js');
 const versions = read('js/modules/versions.js');
 const inactiveUsers = read('js/admin/inactive-users.js');
+const bootstrap = read('js/core/bootstrap.js');
 
 function syntaxOk(file) {
   const result = spawnSync(process.execPath, ['--check', resolve(appRoot, file)], { encoding: 'utf8' });
@@ -39,52 +60,65 @@ function syntaxOk(file) {
   return true;
 }
 
-function ordered(indexText, parts) {
-  let cursor = -1;
-  for (const part of parts) {
-    const next = indexText.indexOf(part);
-    if (next === -1 || next <= cursor) return false;
-    cursor = next;
-  }
-  return true;
-}
-
 function occursOnce(text, needle) {
   const first = text.indexOf(needle);
   return first !== -1 && text.indexOf(needle, first + needle.length) === -1;
 }
 
+function exactRuntimeOrder(html, files) {
+  let cursor = -1;
+  for (const file of files) {
+    const needle = `src="./${file}"`;
+    const pos = html.indexOf(needle);
+    if (pos === -1 || pos <= cursor || !occursOnce(html, needle)) return false;
+    cursor = pos;
+  }
+  return true;
+}
+
+const syntaxChecks = runtimeFiles.map((file) => [`Syntax: ${file}`, syntaxOk(file)]);
 const checks = [
-  ['Syntax: app.js', syntaxOk('app.js')],
-  ['Syntax: auth module', syntaxOk('js/auth/login.js')],
-  ['Syntax: versions module', syntaxOk('js/modules/versions.js')],
-  ['Syntax: admin module', syntaxOk('js/admin/inactive-users.js')],
+  ...syntaxChecks,
   ['Supabase JS v2 CDN', index.includes('@supabase/supabase-js@2')],
   ['JSZip 3.10.1 CDN', index.includes('jszip@3.10.1')],
-  ['Supabase client initialization', app.includes('createClient')],
-  ['Supabase project URL', app.includes('.supabase.co')],
-  ['Core setSession exists', /async\s+function\s+setSession\s*\(/.test(app)],
+  ['Single app Supabase client initialization', app.includes('createClient')],
+  ['Supabase project URL preserved', app.includes('.supabase.co') && core.includes('.supabase.co')],
+  ['Core runtime contract loaded', core.includes("window, 'NaskhahCore'") && core.includes('createServices')],
+  ['Core cutover contract loaded', cutover.includes('window.NaskhahCore.createServices')],
+  ['Core setSession compatibility binding exists', /async\s+function\s+setSession\s*\(/.test(app) || /let\s+[^;]*\bsetSession\b[^;]*;/.test(app)],
   ['Core enterApp exists', /async\s+function\s+enterApp\s*\(/.test(app)],
-  ['Core saveProject exists', /async\s+function\s+saveProject\s*\(/.test(app)],
-  ['Core renderProject exists', /function\s+renderProject\s*\(/.test(app)],
-  ['Core renderAdmin exists', /async\s+function\s+renderAdmin\s*\(/.test(app) || /function\s+renderAdmin\s*\(/.test(app)],
-  ['nv1_profiles usage', app.includes("from('nv1_profiles')") || inactiveUsers.includes("from('nv1_profiles')")],
-  ['nv1_projects usage', app.includes("from('nv1_projects')")],
+  ['Project persistence saveProject binding exists', /let\s+[^;]*\bsaveProject\b[^;]*;/.test(app)],
+  ['Project persistence owns saveProject', projectPersistence.includes('saveProject = async () =>')],
+  ['Project shell renderProject binding exists', /let\s+[^;]*\brenderProject\b[^;]*;/.test(app)],
+  ['Project shell owns renderProject', projectShell.includes('renderProject = (tab) =>')],
+  ['Project shell owns project word/progress helpers', projectShell.includes('projectWords = (p) =>') && projectShell.includes('projectPct = (p) =>')],
+  ['Tab router owns base writing route', tabRouter.includes('bindTab = (tab) =>') && tabRouter.includes("tab === 'writing'") && tabRouter.includes('bindWriter(state.current)')],
+  ['Tab router contract marker', tabRouter.includes("window, 'NaskhahTabRouterModule'")],
+  ['Base bindTab compatibility binding exists', /let\s+bindTab\s*;/.test(app)],
+  ['Legacy bindTab implementation absent', !/function\s+bindTab\s*\(/.test(app)],
+  ['Admin runtime owns renderAdmin', adminRuntime.includes('renderAdmin = async () =>')],
+  ['Admin runtime preserves profile and metadata sources', adminRuntime.includes("from('nv1_profiles')") && adminRuntime.includes("from('nv1_project_metadata')")],
+  ['Admin create action preserved', adminRuntime.includes("action: 'admin_create_user'")],
+  ['Admin delete action preserved in runtime', adminRuntime.includes("action: 'admin_delete_user'")],
+  ['Profile shell owns profile rendering', profileShell.includes('renderProfile = async () =>')],
+  ['Profile shell owns global shell binding', profileShell.includes('bindGlobal = () =>')],
+  ['Logout preserves shared state reference', profileShell.includes('Object.assign(state, window.NaskhahCore.createState())')],
+  ['nv1_profiles usage', adminRuntime.includes("from('nv1_profiles')") || inactiveUsers.includes("from('nv1_profiles')") || profileShell.includes("from('nv1_profiles')")],
+  ['nv1_projects usage', projectPersistence.includes("from('nv1_projects')")],
   ['Login Edge Function usage', login.includes('/functions/v1/naskhah-login')],
   ['Login calls setSession', login.includes('await setSession(')],
   ['User suspension guard preserved', login.includes("state.profile.status==='suspended'")],
   ['Admin role guard preserved', login.includes("state.profile?.role!=='admin'")],
+  ['Bootstrap compatibility bindings exist', /let\s+[^;]*\bbindAuth\b[^;]*\bboot\b[^;]*;/.test(app)],
+  ['Bootstrap owns auth form wiring', bootstrap.includes('bindAuth = () =>')],
+  ['Bootstrap owns startup orchestration', bootstrap.includes('boot = async () =>') && bootstrap.includes("document.addEventListener('DOMContentLoaded', boot)")],
   ['Versions module loaded', index.includes('./js/modules/versions.js') && versions.includes('window.versionsView')],
-  ['Versions bind hook preserved', versions.includes('window.bindTab=function') && versions.includes("tab==='versions'")],
+  ['Versions lexical bind hook preserved', versions.includes('const oldBindTab=bindTab;') && versions.includes('bindTab=function(tab)') && versions.includes('window.bindTab=bindTab;') && versions.includes("tab==='versions'")],
   ['Versions persistence preserved', versions.includes('await saveProject()')],
-  ['Admin module loaded', index.includes('./js/admin/inactive-users.js') && inactiveUsers.includes('window.renderAdmin')],
+  ['Inactive-user extension loaded', index.includes('./js/admin/inactive-users.js') && inactiveUsers.includes('window.renderAdmin')],
   ['Inactive threshold preserved', inactiveUsers.includes('90*86400000')],
-  ['Admin delete action preserved', inactiveUsers.includes("action:'admin_delete_user'")],
-  ['Auth module loaded', index.includes('./js/auth/login.js')],
-  ['Runtime load order correct', ordered(index, ['./app.js','./js/modules/versions.js','./js/admin/inactive-users.js','./js/auth/login.js'])],
-  ['Versions module loaded once', occursOnce(index, './js/modules/versions.js')],
-  ['Admin module loaded once', occursOnce(index, './js/admin/inactive-users.js')],
-  ['Auth module loaded once', occursOnce(index, './js/auth/login.js')],
+  ['Inactive-user delete action preserved', inactiveUsers.includes("action:'admin_delete_user'")],
+  ['Exact full modular runtime load order', exactRuntimeOrder(index, runtimeFiles)],
   ['Legacy updates patch not loaded', !index.includes('./updates-v2.js')],
   ['Legacy login patch not loaded', !index.includes('./login-fix.js')],
   ['No PHP runtime entry point', !existsSync(resolve(appRoot, 'index.php'))],
@@ -98,4 +132,4 @@ for (const [name, ok] of checks) {
 }
 
 if (failed) process.exit(1);
-console.log('\nRuntime stack matches the strict Phase 2 modular baseline.');
+console.log('\nRuntime stack matches the strict Phase 3 J2 modular contract while preserving Phase 2 behavior.');

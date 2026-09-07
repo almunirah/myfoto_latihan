@@ -1,7 +1,7 @@
 /* Naskhah Studio admin module: inactive-user cleanup */
 (()=>{
- const oldRenderAdmin=window.renderAdmin||renderAdmin;
- window.renderAdmin=async function(){
+ const oldRenderAdmin=renderAdmin;
+ renderAdmin=async function(){
    await oldRenderAdmin();
    if(state.profile?.role!=='admin')return;
    const head=$('#main .page-head');
@@ -29,4 +29,5 @@
      };
    }
  };
+ window.renderAdmin=renderAdmin;
 })();

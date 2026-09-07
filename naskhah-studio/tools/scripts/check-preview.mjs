@@ -9,9 +9,18 @@ const paths = [
   '/',
   '/app.js',
   '/styles.css',
-  '/js/auth/login.js',
+  '/js/core/runtime.js',
+  '/js/core/cutover.js',
+  '/js/modules/dashboard.js',
+  '/js/modules/projects.js',
+  '/js/modules/writer.js',
+  '/js/modules/overview-tracking.js',
+  '/js/modules/workspace-views.js',
+  '/js/modules/workspace-bindings.js',
+  '/js/modules/profile-shell.js',
   '/js/modules/versions.js',
   '/js/admin/inactive-users.js',
+  '/js/auth/login.js',
   '/assets/logo.svg'
 ];
 
@@ -30,7 +39,21 @@ for (const path of paths) {
 
 if (!failed) {
   const html = await (await fetch(origin + '/')).text();
-  const order = ['./app.js','./js/modules/versions.js','./js/admin/inactive-users.js','./js/auth/login.js'];
+  const order = [
+    './js/core/runtime.js',
+    './app.js',
+    './js/core/cutover.js',
+    './js/modules/dashboard.js',
+    './js/modules/projects.js',
+    './js/modules/writer.js',
+    './js/modules/overview-tracking.js',
+    './js/modules/workspace-views.js',
+    './js/modules/workspace-bindings.js',
+    './js/modules/profile-shell.js',
+    './js/modules/versions.js',
+    './js/admin/inactive-users.js',
+    './js/auth/login.js'
+  ];
   let cursor = -1;
   for (const src of order) {
     const pos = html.indexOf(src);

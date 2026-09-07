@@ -20,7 +20,7 @@
      $('#closeVersionEdit').onclick=closeModal;
      $('#saveVersionChanges').onclick=async()=>{content[active]=ed.innerHTML;v.name=$('#editVersionName').value.trim()||v.name||'Manuskrip';v.status=$('#editVersionStatus').value;v.content=clone(content);v.updated_at=new Date().toISOString();await saveProject();closeModal();toast('Perubahan versi manuskrip disimpan.');renderProject('versions')};
      $('#saveAsNewVersion').onclick=async()=>{content[active]=ed.innerHTML;p.goals.versions.push({name:($('#editVersionName').value.trim()||v.name||'Manuskrip')+' - Copy',status:$('#editVersionStatus').value,at:new Date().toISOString(),updated_at:new Date().toISOString(),content:clone(content),outline:clone(v.outline||p.outline),checklist:clone(v.checklist||p.checklist)});await saveProject();closeModal();toast('Versi baharu disimpan.');renderProject('versions')};
-     $('#applyVersion').onclick=async()=>{content[active]=ed.innerHTML;if(!confirm('Gunakan versi ini sebagai manuskrip semasa? Kandungan manuskrip semasa akan digantikan.'))return;p.content=clone(content);if(v.outline)p.outline=clone(v.outline);if(v.checklist)p.checklist=clone(v.checklist);await saveProject();closeModal();toast('Versi digunakan sebagai manuskrip semasa.');renderProject('writing')};
+     $('#applyVersion').onclick=async()=>{content[active]=ed.innerHTML;if(!confirm('Gunakan versi ini sebagai manuskrip semasa? Kandungan manuskrip semasa akan digantikan.'))return;p.content=clone(content);if(v.outline)p.outline=clone(v.outline);if(v.checklist)p.checklist=clone(v.checklist);normalizeProject(p);await saveProject();closeModal();toast('Versi digunakan sebagai manuskrip semasa.');renderProject('writing')};
    };
    render();
  }

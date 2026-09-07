@@ -45,7 +45,7 @@
 
   const projectTypeFolder = (type) => `<button class="project-card" data-project-type="${type}" style="min-height:160px;display:flex;align-items:center;justify-content:center;text-align:center"><h3 style="margin:0">${esc(templates[type].label)}</h3></button>`;
 
-  const projectTitleItem = (p) => `<button class="project-card" data-open="${p.id}" style="min-height:92px;display:flex;align-items:center"><h3 style="margin:0">${esc(p.title)}</h3></button>`;
+  const projectTitleItem = (p, index) => `<button data-open="${p.id}" style="width:100%;display:grid;grid-template-columns:42px 1fr;align-items:center;gap:14px;text-align:left;padding:16px 18px;border:0;border-bottom:1px solid #e7e7ee;background:#fff;cursor:pointer"><span class="muted" style="font-weight:700">${index+1}.</span><span style="font-weight:700;color:#111827">${esc(p.title)}</span></button>`;
 
   renderProjects = (type = null) => {
     nav('projects');
@@ -57,8 +57,11 @@
       return;
     }
 
-    const projects = state.projects.filter(p=>p.project_type===type);
-    $('#main').innerHTML = `<div class="page-head"><div><button class="btn" id="backProjectTypes">← Kembali</button><h1 style="margin-top:16px">${esc(templates[type].label)}</h1></div><button class="btn primary" id="newProject">+ Projek Baharu</button></div><div class="project-grid">${projects.map(projectTitleItem).join('')}</div>`;
+    const projects = state.projects
+      .filter(p=>p.project_type===type)
+      .sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'ms',{sensitivity:'base',numeric:true}));
+
+    $('#main').innerHTML = `<div class="page-head"><div><button class="btn" id="backProjectTypes">← Kembali</button><h1 style="margin-top:16px">${esc(templates[type].label)}</h1></div><button class="btn primary" id="newProject">+ Projek Baharu</button></div><div class="card" style="padding:0;overflow:hidden">${projects.length?projects.map(projectTitleItem).join(''):'<div class="muted" style="padding:20px">Belum ada projek.</div>'}</div>`;
     $('#backProjectTypes').onclick = ()=>renderProjects();
     $('#newProject').onclick = openCreate;
     $$('[data-open]').forEach(x=>x.onclick=()=>openProject(x.dataset.open));

@@ -183,7 +183,7 @@ const expectedScripts = [
   './js/modules/dashboard.js',
   './js/modules/projects.js',
   './js/modules/writer.js',
-  './js/tab-router.js',
+  './js/modules/tab-router.js',
   './js/modules/overview-tracking.js',
   './js/modules/workspace-views.js',
   './js/modules/workspace-bindings.js',

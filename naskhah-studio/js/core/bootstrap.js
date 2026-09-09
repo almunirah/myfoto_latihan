@@ -2,6 +2,27 @@
 (() => {
   'use strict';
 
+  const SECURE_LOGIN_URL=SUPABASE_URL+'/functions/v1/naskhah-secure-login';
+
+  async function secureLogin(email,password,turnstileToken){
+    const response=await fetch(SECURE_LOGIN_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY},
+      body:JSON.stringify({email,password,turnstile_token:turnstileToken})
+    });
+    const body=await response.json();
+    if(!response.ok)throw new Error(body.error||'Login gagal.');
+    return body;
+  }
+
+  function turnstileToken(){
+    return $('#loginForm [name="cf-turnstile-response"]')?.value?.trim()||'';
+  }
+
+  function resetTurnstile(){
+    try{ if(window.turnstile) window.turnstile.reset(); }catch{}
+  }
+
   bindAuth = () => {
     $('#goAdmin').onclick = () => showPublic('admin');
     $$('.toLogin').forEach(x => x.onclick = () => showPublic('login'));
@@ -9,12 +30,16 @@
 
     $('#loginForm').onsubmit = async e => {
       e.preventDefault();
+      const token=turnstileToken();
+      if(!token)return toast('Sila lengkapkan pengesahan “Are you human?”.',true);
       try {
-        const j = await authCall({ action: 'login', identifier: $('#loginUser').value.trim(), password: $('#loginPass').value });
+        const j = await secureLogin($('#loginUser').value.trim().toLowerCase(), $('#loginPass').value, token);
         await setSession(j.access_token, j.refresh_token);
         if (state.profile?.status === 'suspended') throw new Error('Akaun digantung. Hubungi admin.');
+        if (j.must_change_password || state.profile?.must_change_password) return showPublic('firstPassword');
         await enterApp();
       } catch (err) {
+        resetTurnstile();
         toast(err.message, true);
       }
     };
@@ -45,6 +70,22 @@
       }
     };
 
+    $('#firstPasswordForm').onsubmit = async e => {
+      e.preventDefault();
+      const a=$('#firstPassword').value;
+      const b=$('#firstPassword2').value;
+      if(a.length<8)return toast('Password baharu minimum 8 aksara.',true);
+      if(a!==b)return toast('Password tidak sama.',true);
+      try{
+        await authCall({action:'change_own_password',new_password:a},true);
+        await loadProfile();
+        $('#firstPassword').value='';
+        $('#firstPassword2').value='';
+        toast('Password berjaya ditukar.');
+        await enterApp();
+      }catch(err){toast(err.message||'Password gagal ditukar.',true)}
+    };
+
     $('#resetForm').onsubmit = async e => {
       e.preventDefault();
       const a = $('#resetPass').value;
@@ -65,6 +106,7 @@
       try {
         state.session = session;
         await loadProfile();
+        if(state.profile?.status==='active' && state.profile?.must_change_password) return showPublic('firstPassword');
         if (state.profile?.status === 'active') return enterApp();
       } catch {}
       await sb.auth.signOut();
@@ -75,7 +117,7 @@
   document.addEventListener('DOMContentLoaded', boot);
 
   Object.defineProperty(window, 'NaskhahBootstrapModule', {
-    value: Object.freeze({ version: '3.0.0-i1' }),
+    value: Object.freeze({ version: '3.1.0-secure-login' }),
     writable: false,
     configurable: false,
     enumerable: true

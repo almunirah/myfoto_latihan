@@ -2,11 +2,28 @@
 (() => {
   'use strict';
 
+  const secureIndex = (max) => {
+    const limit = Math.floor(0x100000000 / max) * max;
+    const buf = new Uint32Array(1);
+    do crypto.getRandomValues(buf); while (buf[0] >= limit);
+    return buf[0] % max;
+  };
+
   const generateTemporaryPassword = () => {
-    const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
-    const bytes=new Uint32Array(14);
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes,n=>chars[n%chars.length]).join('');
+    const groups=[
+      'ABCDEFGHJKLMNPQRSTUVWXYZ',
+      'abcdefghijkmnopqrstuvwxyz',
+      '23456789',
+      '!@#$%'
+    ];
+    const all=groups.join('');
+    const chars=groups.map(g=>g[secureIndex(g.length)]);
+    while(chars.length<14)chars.push(all[secureIndex(all.length)]);
+    for(let i=chars.length-1;i>0;i--){
+      const j=secureIndex(i+1);
+      [chars[i],chars[j]]=[chars[j],chars[i]];
+    }
+    return chars.join('');
   };
 
   const bindPasswordTools = (inputId, showId, generateId) => {
@@ -25,7 +42,7 @@
   };
 
   const showProvisionedCredentials = ({email,password,title='Login Details'}) => {
-    modal(`<h2>${esc(title)}</h2><p class="muted">Salin maklumat ini dan berikan kepada pengguna. Password sementara ini tidak disimpan atau dipaparkan semula oleh Admin Panel.</p><label>Email<input id="credentialEmail" value="${esc(email)}" readonly></label><label>Password Sementara<input id="credentialPassword" value="${esc(password)}" readonly></label><div class="actions"><button class="btn" id="copyCredentials">Copy Login Details</button><button class="btn primary" id="closeCredentials">Selesai</button></div>`);
+    modal(`<h2>${esc(title)}</h2><p class="muted">Salin maklumat ini dan berikan kepada pengguna. Password sementara ini dipaparkan sekali sahaja dan tidak disimpan dalam profil atau audit log.</p><label>Email<input id="credentialEmail" value="${esc(email)}" readonly></label><label>Password Sementara<input id="credentialPassword" value="${esc(password)}" readonly></label><div class="actions"><button class="btn" id="copyCredentials">Copy Login Details</button><button class="btn primary" id="closeCredentials">Selesai</button></div>`);
     $('#copyCredentials').onclick=async()=>{
       const text=`Naskhah Studio\nEmail: ${email}\nPassword sementara: ${password}\n\nSila tukar password selepas login pertama.`;
       try{
@@ -86,7 +103,7 @@
   adminEditDialog = (u) => {
     const exp = u.subscription_expires_at ? new Date(u.subscription_expires_at).toISOString().slice(0, 10) : '';
     const passwordSection=u.role==='admin'?'':`<hr><h3>Password Management</h3><p class="muted">Admin tidak boleh melihat password semasa pengguna. Tetapkan password sementara baru jika reset diperlukan.</p><label>Password Sementara Baharu<input id="euPass" type="password" minlength="8" autocomplete="new-password" placeholder="Biarkan kosong jika tidak reset"></label><div class="actions"><button class="btn small" type="button" id="euShowPass">Show</button><button class="btn small" type="button" id="euGeneratePass">Generate Password</button><button class="btn" type="button" id="resetUserPass">Set New Password</button></div>`;
-    modal(`<h2>Edit User</h2><div class="grid2"><label>Nama<input id="euName" value="${esc(u.display_name||'')}"></label><label>Username<input value="${esc(u.username||'')}" disabled></label></div><label>Email<input id="euEmail" type="email" value="${esc(u.email||'')}"></label><div class="grid2"><label>Plan<select id="euPlan"><option>free</option><option>pro</option><option>premium</option><option>business</option></select></label><label>Subscription<select id="euSub"><option>trial</option><option>active</option><option>past_due</option><option>cancelled</option><option>expired</option></select></label></div><div class="grid2"><label>Expiry<input id="euExpiry" type="date" value="${exp}"></label><label>Status<select id="euStatus"><option>active</option><option>suspended</option></select></label></div>${passwordSection}<div class="actions"><button class="btn" onclick="closeModal()">Batal</button><button class="btn primary" id="saveUser">Simpan Profil</button></div>`);
+    modal(`<h2>Edit User</h2><div class="grid2"><label>Nama<input id="euName" value="${esc(u.display_name||'')}"></label><label>Username<input value="${esc(u.username||'')}" disabled></label></div><label>Email Sign In<input id="euEmail" type="email" required value="${esc(u.email||'')}"></label><div class="grid2"><label>Plan<select id="euPlan"><option>free</option><option>pro</option><option>premium</option><option>business</option></select></label><label>Subscription<select id="euSub"><option>trial</option><option>active</option><option>past_due</option><option>cancelled</option><option>expired</option></select></label></div><div class="grid2"><label>Expiry<input id="euExpiry" type="date" value="${exp}"></label><label>Status<select id="euStatus"><option>active</option><option>suspended</option></select></label></div>${passwordSection}<div class="actions"><button class="btn" onclick="closeModal()">Batal</button><button class="btn primary" id="saveUser">Simpan Profil</button></div>`);
     $('#euPlan').value = u.plan || 'free';
     $('#euSub').value = u.subscription_status || 'trial';
     $('#euStatus').value = u.status || 'active';
@@ -95,29 +112,35 @@
       bindPasswordTools('euPass','euShowPass','euGeneratePass');
       $('#resetUserPass').onclick=async()=>{
         const password=$('#euPass').value;
+        const email=$('#euEmail').value.trim().toLowerCase();
         if(password.length<8)return toast('Password sementara minimum 8 aksara.',true);
+        if(!/^\S+@\S+\.\S+$/.test(email))return toast('Simpan email sign in yang sah dahulu.',true);
         try{
           await authCall({action:'admin_reset_password',user_id:u.id,new_password:password},true);
-          showProvisionedCredentials({email:$('#euEmail').value.trim().toLowerCase()||u.email||'',password,title:'Password Berjaya Direset'});
+          showProvisionedCredentials({email,password,title:'Password Berjaya Direset'});
           toast('Password sementara baharu ditetapkan.');
         }catch(e){toast(e.message,true)}
       };
     }
 
     $('#saveUser').onclick = async () => {
-      const { error } = await sb.from('nv1_profiles').update({
-        display_name: $('#euName').value.trim(),
-        email: $('#euEmail').value.trim() || null,
-        plan: $('#euPlan').value,
-        subscription_status: $('#euSub').value,
-        subscription_expires_at: $('#euExpiry').value ? new Date($('#euExpiry').value + 'T23:59:59').toISOString() : null,
-        status: $('#euStatus').value,
-        updated_at: new Date().toISOString()
-      }).eq('id', u.id);
-      if (error) return toast(error.message, true);
-      closeModal();
-      toast('User dikemas kini.');
-      renderAdmin();
+      const email=$('#euEmail').value.trim().toLowerCase();
+      if(!/^\S+@\S+\.\S+$/.test(email))return toast('Masukkan email yang sah.',true);
+      try{
+        await authCall({
+          action:'admin_update_user',
+          user_id:u.id,
+          display_name:$('#euName').value.trim(),
+          email,
+          plan:$('#euPlan').value,
+          subscription_status:$('#euSub').value,
+          subscription_expires_at:$('#euExpiry').value ? new Date($('#euExpiry').value + 'T23:59:59').toISOString() : null,
+          status:$('#euStatus').value
+        },true);
+        closeModal();
+        toast('User dikemas kini.');
+        renderAdmin();
+      }catch(e){toast(e.message,true)}
     };
   };
 
@@ -137,7 +160,7 @@
   };
 
   Object.defineProperty(window, 'NaskhahAdminRuntimeModule', {
-    value: Object.freeze({ version: '3.1.0-secure-provisioning' }),
+    value: Object.freeze({ version: '3.2.0-secure-provisioning' }),
     writable: false,
     configurable: false,
     enumerable: true

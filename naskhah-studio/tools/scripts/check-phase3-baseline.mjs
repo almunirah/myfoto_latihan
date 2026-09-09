@@ -158,7 +158,7 @@ for (const token of requiredCutoverTokens) if (!source.cutover.includes(token)) 
 const moduleChecks = {
   projectPersistence: ['saveProject = async () =>',"from('nv1_projects')","window, 'NaskhahProjectPersistenceModule'"],
   projectShell: ['projectWords = (p) =>','projectPct = (p) =>','tabs = (active) =>','renderProject = (tab) =>',"window, 'NaskhahProjectShellModule'"],
-  dashboard: ['projectCard = (p) =>','reminderCentre = () =>','renderDashboard = () =>','renderProjects = () =>',"window, 'NaskhahDashboardModule'"],
+  dashboard: ['projectCard = (p) =>','reminderCentre = () =>','renderDashboard = () =>','renderProjects = (type = null) =>',"window, 'NaskhahDashboardModule'"],
   projects: ['openCreate = () =>','createProject = async () =>','normalizeProject = (p) =>','openProject = (id) =>',"window, 'NaskhahProjectsModule'"],
   writer: ['writingView = (p) =>','bindWriter = (p) =>','openTableDialog = (ed) =>','uploadImage = async (p, ed, file) =>','hydrateImages = async (ed) =>',"from('naskhah-media')","document.execCommand('undo')","document.execCommand('redo')","window, 'NaskhahWriterModule'"],
   tabRouter: ['bindTab = (tab) =>',"tab === 'writing'",'bindWriter(state.current)',"window, 'NaskhahTabRouterModule'"],
@@ -183,7 +183,7 @@ const expectedScripts = [
   './js/modules/dashboard.js',
   './js/modules/projects.js',
   './js/modules/writer.js',
-  './js/modules/tab-router.js',
+  './js/tab-router.js',
   './js/modules/overview-tracking.js',
   './js/modules/workspace-views.js',
   './js/modules/workspace-bindings.js',

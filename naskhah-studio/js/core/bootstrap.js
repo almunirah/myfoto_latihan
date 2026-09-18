@@ -34,8 +34,7 @@
     const clean=String(email||'').trim().toLowerCase();
     if(!/^\S+@\S+\.\S+$/.test(clean))throw new Error('Masukkan alamat email yang sah.');
     const redirectTo=location.origin+location.pathname;
-    const {error}=await sb.auth.resetPasswordForEmail(clean,{redirectTo});
-    if(error)throw new Error('Reset link tidak dapat dihantar sekarang. Sila cuba lagi.');
+    await authCall({action:'forgot',identifier:clean,redirect_to:redirectTo});
   }
 
   function bindRecoveryListener(){
@@ -51,6 +50,7 @@
     $('#goAdmin').onclick=()=>showPublic('admin');
     $$('.toLogin').forEach(x=>x.onclick=()=>showPublic('login'));
     $('#forgotLink').onclick=()=>showPublic('forgot');
+    $('#adminForgotLink').onclick=()=>showPublic('forgot');
 
     $('#loginForm').onsubmit=async e=>{
       e.preventDefault();
@@ -161,7 +161,7 @@
   document.addEventListener('DOMContentLoaded',boot);
 
   Object.defineProperty(window,'NaskhahBootstrapModule',{
-    value:Object.freeze({version:'3.2.0-auth-reliability'}),
+    value:Object.freeze({version:'3.3.0-admin-email-recovery'}),
     writable:false,
     configurable:false,
     enumerable:true

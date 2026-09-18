@@ -3,7 +3,9 @@
   'use strict';
 
   const SECURE_LOGIN_URL=SUPABASE_URL+'/functions/v1/naskhah-secure-login';
-  let recoveryMode=false;
+  const SECURE_RECOVERY_URL=SUPABASE_URL+'/functions/v1/naskhah-secure-recovery';
+  const recoveryUrl=()=>{ const h=new URLSearchParams(location.hash.replace(/^#/,'')),q=new URLSearchParams(location.search); return h.get('type')==='recovery'||q.get('type')==='recovery'||q.has('code'); };
+  let recoveryMode=recoveryUrl();
 
   async function secureLogin(email,password,turnstileToken){
     let response;
@@ -22,19 +24,24 @@
     return body;
   }
 
-  function turnstileToken(){
-    return $('#loginForm [name="cf-turnstile-response"]')?.value?.trim()||'';
+  function turnstileToken(formId='loginForm'){
+    return $('#'+formId+' [name="cf-turnstile-response"]')?.value?.trim()||'';
   }
 
   function resetTurnstile(){
     try{if(window.turnstile)window.turnstile.reset()}catch{}
   }
 
-  async function sendRecoveryEmail(email){
+  async function sendRecoveryEmail(email,token){
     const clean=String(email||'').trim().toLowerCase();
     if(!/^\S+@\S+\.\S+$/.test(clean))throw new Error('Masukkan alamat email yang sah.');
-    const redirectTo=location.origin+location.pathname;
-    await authCall({action:'forgot',identifier:clean,redirect_to:redirectTo});
+    if(!token)throw new Error('Sila lengkapkan pengesahan “Are you human?”.');
+    let response;
+    try{
+      response=await fetch(SECURE_RECOVERY_URL,{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY},body:JSON.stringify({email:clean,turnstile_token:token,redirect_to:location.origin+location.pathname})});
+    }catch{throw new Error('Sambungan recovery gagal. Sila cuba lagi.');}
+    let body={}; try{body=await response.json()}catch{}
+    if(!response.ok)throw new Error(body.error||'Reset link gagal dihantar.');
   }
 
   function bindRecoveryListener(){
@@ -86,10 +93,11 @@
       const button=$('#forgotForm button[type="submit"]');
       button.disabled=true;
       try{
-        await sendRecoveryEmail($('#forgotUser').value);
+        await sendRecoveryEmail($('#forgotUser').value,turnstileToken('forgotForm'));
         toast('Jika email berdaftar, reset link telah dihantar.');
         showPublic('login');
       }catch(err){
+        resetTurnstile();
         toast(err.message||'Reset link gagal dihantar.',true);
       }finally{
         button.disabled=false;
@@ -121,6 +129,7 @@
       try{
         const {error}=await sb.auth.updateUser({password:a});
         if(error)throw error;
+        await authCall({action:'complete_password_recovery'},true);
         recoveryMode=false;
         $('#resetPass').value='';
         $('#resetPass2').value='';
@@ -141,7 +150,7 @@
     bindAuth();
 
     // Give Supabase a brief opportunity to consume a password-recovery URL.
-    await new Promise(resolve=>setTimeout(resolve,50));
+    await new Promise(resolve=>setTimeout(resolve,recoveryMode?350:50));
     if(recoveryMode)return showPublic('reset');
 
     const {data:{session}}=await sb.auth.getSession();
@@ -161,7 +170,7 @@
   document.addEventListener('DOMContentLoaded',boot);
 
   Object.defineProperty(window,'NaskhahBootstrapModule',{
-    value:Object.freeze({version:'3.3.0-admin-email-recovery'}),
+    value:Object.freeze({version:'3.5.0-auth-repair'}),
     writable:false,
     configurable:false,
     enumerable:true

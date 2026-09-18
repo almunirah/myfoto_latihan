@@ -22,20 +22,20 @@
     return body;
   }
 
-  function turnstileToken(){
-    return $('#loginForm [name="cf-turnstile-response"]')?.value?.trim()||'';
+  function turnstileToken(formId='loginForm'){
+    return $('#' + formId + ' [name="cf-turnstile-response"]')?.value?.trim()||'';
   }
 
   function resetTurnstile(){
     try{if(window.turnstile)window.turnstile.reset()}catch{}
   }
 
-  async function sendRecoveryEmail(email){
+  async function sendRecoveryEmail(email,turnstileToken){
     const clean=String(email||'').trim().toLowerCase();
     if(!/^\S+@\S+\.\S+$/.test(clean))throw new Error('Masukkan alamat email yang sah.');
+    if(!turnstileToken)throw new Error('Sila lengkapkan pengesahan “Are you human?”.');
     const redirectTo=location.origin+location.pathname;
-    const {error}=await sb.auth.resetPasswordForEmail(clean,{redirectTo});
-    if(error)throw new Error('Reset link tidak dapat dihantar sekarang. Sila cuba lagi.');
+    await authCall({action:'forgot',identifier:clean,redirect_to:redirectTo,turnstile_token:turnstileToken});
   }
 
   function bindRecoveryListener(){
@@ -51,6 +51,7 @@
     $('#goAdmin').onclick=()=>showPublic('admin');
     $$('.toLogin').forEach(x=>x.onclick=()=>showPublic('login'));
     $('#forgotLink').onclick=()=>showPublic('forgot');
+    $('#adminForgotLink').onclick=()=>showPublic('forgot');
 
     $('#loginForm').onsubmit=async e=>{
       e.preventDefault();
@@ -86,10 +87,12 @@
       const button=$('#forgotForm button[type="submit"]');
       button.disabled=true;
       try{
-        await sendRecoveryEmail($('#forgotUser').value);
+        const token=turnstileToken('forgotForm');
+        await sendRecoveryEmail($('#forgotUser').value,token);
         toast('Jika email berdaftar, reset link telah dihantar.');
         showPublic('login');
       }catch(err){
+        resetTurnstile();
         toast(err.message||'Reset link gagal dihantar.',true);
       }finally{
         button.disabled=false;
@@ -121,6 +124,7 @@
       try{
         const {error}=await sb.auth.updateUser({password:a});
         if(error)throw error;
+        await authCall({action:'complete_password_recovery'},true);
         recoveryMode=false;
         $('#resetPass').value='';
         $('#resetPass2').value='';
@@ -161,7 +165,7 @@
   document.addEventListener('DOMContentLoaded',boot);
 
   Object.defineProperty(window,'NaskhahBootstrapModule',{
-    value:Object.freeze({version:'3.2.0-auth-reliability'}),
+    value:Object.freeze({version:'3.4.0-recovery-hardening'}),
     writable:false,
     configurable:false,
     enumerable:true

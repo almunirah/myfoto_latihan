@@ -3,7 +3,12 @@
   'use strict';
 
   const SECURE_LOGIN_URL=SUPABASE_URL+'/functions/v1/naskhah-secure-login';
-  const recoveryUrl=()=>{\n    const hash=new URLSearchParams(location.hash.replace(/^#/,''));\n    const query=new URLSearchParams(location.search);\n    return hash.get('type')==='recovery'||query.get('type')==='recovery'||query.has('code');\n  };\n  let recoveryMode=recoveryUrl();
+  const recoveryUrl=()=>{
+    const hash=new URLSearchParams(location.hash.replace(/^#/,''));
+    const query=new URLSearchParams(location.search);
+    return hash.get('type')==='recovery'||query.get('type')==='recovery'||query.has('code');
+  };
+  let recoveryMode=recoveryUrl();
 
   async function secureLogin(email,password,turnstileToken){
     let response;
@@ -161,7 +166,7 @@
   document.addEventListener('DOMContentLoaded',boot);
 
   Object.defineProperty(window,'NaskhahBootstrapModule',{
-    value:Object.freeze({version:'3.3.1-recovery-link-fix'}),
+    value:Object.freeze({version:'3.3.2-login-load-fix'}),
     writable:false,
     configurable:false,
     enumerable:true
